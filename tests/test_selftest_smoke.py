@@ -32,7 +32,7 @@ def test_honesty_red_when_dataset_version_missing_after_cutoff(tmp_path):
     _write_run(tmp_path / "20260914-225959-00", dataset_version="")
     ok, report = selftest.honesty(tmp_path)
     assert ok is False
-    assert report["прогонов без dataset_version (новее рубежа %s)" % selftest.DATASET_VERSION_CUTOFF] == [
+    assert report["runs without dataset_version (newer than cutoff %s)" % selftest.DATASET_VERSION_CUTOFF] == [
         "20260914-225959-00"
     ]
 
@@ -41,7 +41,7 @@ def test_honesty_green_when_dataset_version_missing_before_cutoff(tmp_path):
     _write_run(tmp_path / "20260914-215000-00", dataset_version="")
     ok, report = selftest.honesty(tmp_path)
     assert ok is True
-    assert report["прогонов без dataset_version (новее рубежа %s)" % selftest.DATASET_VERSION_CUTOFF] == []
+    assert report["runs without dataset_version (newer than cutoff %s)" % selftest.DATASET_VERSION_CUTOFF] == []
 
 
 def test_honesty_green_when_dataset_version_present(tmp_path):
@@ -56,14 +56,14 @@ def test_honesty_red_when_rates_without_run_json(tmp_path):
     (folder / "rates.npz").write_bytes(b"")
     ok, report = selftest.honesty(tmp_path)
     assert ok is False
-    assert report["прогонов без run.json (есть rates.npz)"] == ["20260915-020000-00"]
+    assert report["runs without run.json (rates.npz present)"] == ["20260915-020000-00"]
 
 
 def test_honesty_red_when_code_hash_empty(tmp_path):
     _write_run(tmp_path / "20260915-020000-00", dataset_version="cook2019-c302", code_hash="")
     ok, report = selftest.honesty(tmp_path)
     assert ok is False
-    assert report["прогонов без code_hash"] == ["20260915-020000-00"]
+    assert report["runs without code_hash"] == ["20260915-020000-00"]
 
 
 def test_honesty_red_when_extreme_flag_not_bool(tmp_path):
@@ -71,7 +71,7 @@ def test_honesty_red_when_extreme_flag_not_bool(tmp_path):
                 extra={"extreme": "true"})
     ok, report = selftest.honesty(tmp_path)
     assert ok is False
-    assert report["прогонов с некорректным extra.extreme"] == ["20260915-020000-00"]
+    assert report["runs with an invalid extra.extreme"] == ["20260915-020000-00"]
 
 
 def test_honesty_red_when_atlas_row_missing_run_id(tmp_path):
@@ -82,4 +82,4 @@ def test_honesty_red_when_atlas_row_missing_run_id(tmp_path):
         json.dumps({"fafb_783": {"valence": 1, "sugar": 10.0}}, ensure_ascii=False), encoding="utf-8")
     ok, report = selftest.honesty(tmp_path)
     assert ok is False
-    assert report["строк атласа без run_id"] == ["x.json:fafb_783"]
+    assert report["atlas rows without run_id"] == ["x.json:fafb_783"]

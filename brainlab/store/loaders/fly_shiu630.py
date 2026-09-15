@@ -1,9 +1,10 @@
-"""Набор эталона Shiu и др. 2024: FlyWire v630 как в репозитории philshiu/Drosophila_brain_model.
+"""The Shiu et al. 2024 reference dataset: FlyWire v630 as in the philshiu/Drosophila_brain_model repository.
 
-Берём файлы как есть: все синапсы без порога, знак ребра — столбец Excitatory (у авторов по
-предсказанному медиатору пресинаптической клетки). Клетки не подписаны (только id); группы
-для опытов — явные списки id в lab/populations/flywire_630_shiu.yaml, взятые из figures.ipynb
-авторов. Назначение набора одно: наш LIF обязан повторить эталон на этих же данных (ворота 2).
+We take the files as-is: all synapses with no threshold, edge sign = the Excitatory column (by the
+authors, from the presynaptic cell's predicted transmitter). Cells are unlabeled (id only); groups
+for experiments are explicit id lists in lab/populations/flywire_630_shiu.yaml, taken from the
+authors' figures.ipynb. The dataset has one purpose: our LIF must reproduce the reference on this
+same data (gate 2).
 """
 from pathlib import Path
 
@@ -14,7 +15,7 @@ from .. import db
 
 DATASET_ID = "flywire_630_shiu"
 SOURCE = "https://github.com/philshiu/Drosophila_brain_model (Shiu et al. 2024, Nature; MIT)"
-LICENSE = "MIT (код и таблицы репозитория); FlyWire CC-BY 4.0"
+LICENSE = "MIT (repository code and tables); FlyWire CC-BY 4.0"
 VERSION = "630-shiu-2023_03_23"
 MIN_COUNT = 1
 SIGN_RULE = "sign column Excitatory from Shiu 2024 parquet (per edge)"
@@ -41,7 +42,7 @@ def load(conn, raw_dir):
         rows.append({"name": name, "cell_type": "", "cell_class": "neuron", "transmitter": tr, "side": "",
                      "region": "", "extra": {"signs": {"pos": p, "neg": q}} if tr == "mixed" else {}})
     try:
-        # одна транзакция на загрузчик (см. worm_cook2019.load): исключение — rollback, набора в базе нет
+        # one transaction per loader (see worm_cook2019.load): exception — rollback, dataset absent from the database
         db.register_dataset(conn, DATASET_ID, SOURCE, VERSION, LICENSE, files,
                             {"sign_rule": SIGN_RULE, "min_count": MIN_COUNT, "source_files": sorted(files)})
         db.add_neurons(conn, DATASET_ID, rows)

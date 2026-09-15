@@ -1,5 +1,5 @@
-"""Результат прогона и его описание. Папка results/<id>/: run.json (всё, из чего получен),
-rates.npz (окна × клетки), summary.md. Прогоны не удаляются; есть пометка archived."""
+"""A run's result and its description. Folder results/<id>/: run.json (everything it was produced from),
+rates.npz (windows × cells), summary.md. Runs are never deleted; there is an archived flag."""
 import hashlib
 import json
 import time
@@ -47,8 +47,8 @@ class RunResult:
     archived: bool = False
     id: str = ""
     extra: dict = field(default_factory=dict)
-    dataset_version: str = ""          # версия набора (graph.version); пусто — старые run.json до задачи 7
-    dataset_params: dict = field(default_factory=dict)   # параметры набора (graph.params: sign_rule/min_count/...); пусто — старые run.json до финальной волны
+    dataset_version: str = ""          # dataset version (graph.version); empty — old run.json files predating task 7
+    dataset_params: dict = field(default_factory=dict)   # dataset params (graph.params: sign_rule/min_count/...); empty — old run.json files predating the final wave
 
     def group_rate(self, names, t0_ms=None, t1_ms=None):
         pos = {n: i for i, n in enumerate(self.names)}
@@ -58,15 +58,15 @@ class RunResult:
         return float(self.rates[w0:w1][:, idx].mean()) if idx else 0.0
 
     def hz(self, names, t0_ms=None, t1_ms=None):
-        """Средняя частота группы в Гц (LIF); у плавной модели extra["max_rate_hz"] нет → ValueError."""
+        """Mean firing rate of the group in Hz (LIF); the graded model has no extra["max_rate_hz"] → ValueError."""
         if "max_rate_hz" not in self.extra:
-            raise ValueError("hz() только для LIF: в extra нет max_rate_hz")
+            raise ValueError("hz() is for LIF only: extra has no max_rate_hz")
         return self.group_rate(names, t0_ms, t1_ms) * float(self.extra["max_rate_hz"])
 
     def rates_hz(self):
-        """rates в Гц (LIF): нормированные rates · max_rate_hz."""
+        """rates in Hz (LIF): normalized rates · max_rate_hz."""
         if "max_rate_hz" not in self.extra:
-            raise ValueError("rates_hz() только для LIF: в extra нет max_rate_hz")
+            raise ValueError("rates_hz() is for LIF only: extra has no max_rate_hz")
         return self.rates * float(self.extra["max_rate_hz"])
 
     def save(self, base=None):
@@ -80,11 +80,11 @@ class RunResult:
         np.savez_compressed(folder / "rates.npz", rates=self.rates.astype(np.float32))
         dp_line = ""
         if self.dataset_params.get("sign_rule") or self.dataset_params.get("min_count"):
-            dp_line = "\nправило знаков: %s, min_count: %s\n" % (
+            dp_line = "\nsign rule: %s, min_count: %s\n" % (
                 self.dataset_params.get("sign_rule", "-"), self.dataset_params.get("min_count", "-"))
         (folder / "summary.md").write_text(
-            "# Прогон %s\n\nнабор %s (версия %s), модель %s, зерно %d, окон %d по %.0f мс, клеток %d\n%s\n"
-            "флаги: %s\n\nоценка: %+d, родитель: %s\n" % (
+            "# Run %s\n\ndataset %s (version %s), model %s, seed %d, %d windows of %.0f ms, %d cells\n%s\n"
+            "flags: %s\n\nvalence: %+d, parent: %s\n" % (
                 self.id, self.dataset, self.dataset_version or "-", self.model, self.seed, self.rates.shape[0],
                 self.window_ms, self.rates.shape[1], dp_line, json.dumps(self.flags, ensure_ascii=False), self.valence,
                 self.parent or "-"),

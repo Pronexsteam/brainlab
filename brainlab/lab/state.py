@@ -1,5 +1,5 @@
-"""Вектор состояния прогона: средняя активность подписанных групп в каждом окне (дизайн §7а).
-Слово «эмоции» не используем: это показания групп клеток, не больше."""
+"""State vector of a run: mean activity of the signed groups in each window (design §7a).
+We do not use the word "emotions": these are readings of cell groups, nothing more."""
 import numpy as np
 
 from . import populations

@@ -27,19 +27,19 @@ def test_register_twice_replaces(tmp_db):
     db.register_dataset(conn, "toy", "s", "1", "L", {}, {})
     db.add_neurons(conn, "toy", [{"name": "A", "cell_type": "", "cell_class": "neuron", "transmitter": "", "side": "", "region": "", "extra": {}}])
     db.register_dataset(conn, "toy", "s", "2", "L", {}, {})
-    assert db.neurons(conn, "toy") == []          # перерегистрация чистит старые строки набора
+    assert db.neurons(conn, "toy") == []          # re-registering clears the dataset's old rows
     assert db.dataset_info(conn, "toy")["version"] == "2"
 
 
 def test_rollback_on_failing_edge_generator(tmp_db):
-    """register_dataset/add_neurons/add_edges не коммитят сами (задача 5 финальной волны):
-    если генератор рёбер падает посреди работы и загрузчик делает conn.rollback(), в базе не
-    остаётся ни набора, ни нейронов — не полузагруженное состояние."""
+    """register_dataset/add_neurons/add_edges do not commit themselves (task 5 of the final wave):
+    if the edge generator fails midway and the loader calls conn.rollback(), the database keeps
+    neither the dataset nor the neurons — no half-loaded state."""
     conn = db.connect(tmp_db)
 
     def bad_edges():
         yield {"pre": "A", "post": "B", "kind": "chemical", "count": 1, "sign": 1}
-        raise RuntimeError("генератор рёбер упал")
+        raise RuntimeError("edge generator failed")
 
     try:
         db.register_dataset(conn, "toy", "s", "1", "L", {}, {})

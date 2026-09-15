@@ -1,4 +1,4 @@
-"""Именованные группы клеток. У червя — классический контур касания (Chalfie 1985)."""
+"""Named cell groups. For the worm — the classic touch circuit (Chalfie 1985)."""
 WORM = {
     "anterior_touch": ["ALML", "ALMR", "AVM"],
     "posterior_touch": ["PLML", "PLMR"],

@@ -34,7 +34,7 @@ def test_load_toy(tmp_db, tmp_path):
 def test_load_real(tmp_db):
     raw = paths.DATA / "flywire_630_shiu" / "raw"
     if not (raw / "2023_03_23_connectivity_630_final.parquet").exists():
-        pytest.skip("нет сырья эталона")
+        pytest.skip("no reference raw data")
     conn = db.connect(tmp_db)
     s = shiu.load(conn, raw)
     assert s["neurons"] == 127400 and s["edges"] == 14687178

@@ -1,15 +1,16 @@
-"""Ворота 2. Муха: рецепторы сахара → мотонейрон хоботка MN9; горечь глушит ответ.
-Эталон — вывод модели Shiu и др. 2024 (Brian2) на тех же данных v630: sugarR.parquet из их
-репозитория (21 сахарная клетка справа, Пуассон 150 Гц, 1 с, 30 повторов; MN9 93,3 ± 3,2 Гц).
-Критерии: 0.6 ≤ MN9_ours/MN9_oracle ≤ 1.4; Спирмен по 200 самым активным клеткам эталона ≥ 0.7;
-число активных (>1 Гц) клеток в 0.7–1.4 от эталона; сахар+горечь ≤ 0.5·сахар по MN9.
-Пуассон у нас и у Brian2 — разные генераторы, поэтому сравнение по частотам и порядку, не по спайкам.
-Оговорка: абсолютные частоты отгруженного parquet (GRN 197 Гц, MN9 93 Гц) авторским кодом на текущем
-Brian2 2.10 не воспроизводятся (150 / 83 Гц), порядок клеток — воспроизводится (ρ 0,987 по топ-200).
-Оговорка про локальный Brian2 (авторский код, 82,7 Гц): ratio ≈ 1,35 при границе критерия 1,4 —
-наш прогон относительно локально воспроизведённого эталона ближе к границе, чем относительно
-отгруженного parquet (ratio ≈ 1,2); критерий считается только по отгруженному parquet, локальный
-Brian2 — информационная сверка (см. results/oracle_brian2/sugarR_ours.parquet, если он есть)."""
+"""Gate 2. Fly: sugar receptors → proboscis motor neuron MN9; bitter suppresses the response.
+Reference — the output of the Shiu et al. 2024 model (Brian2) on the same v630 data: sugarR.parquet
+from their repository (21 right-side sugar cells, 150 Hz Poisson, 1 s, 30 repeats; MN9 93.3 ± 3.2 Hz).
+Criteria: 0.6 ≤ MN9_ours/MN9_oracle ≤ 1.4; Spearman over the reference's 200 most active cells ≥ 0.7;
+the number of active (>1 Hz) cells within 0.7-1.4 of the reference; sugar+bitter ≤ 0.5·sugar on MN9.
+Our Poisson generator and Brian2's are different generators, so the comparison is by rates and ranking,
+not by spikes.
+Caveat: the shipped parquet's absolute rates (GRN 197 Hz, MN9 93 Hz) are not reproduced by the authors'
+code on current Brian2 2.10 (150 / 83 Hz instead); the cell ranking IS reproduced (ρ 0.987 on the top-200).
+Caveat about local Brian2 (authors' code, 82.7 Hz): ratio ≈ 1.35 against the criterion's 1.4 boundary —
+our run is closer to the boundary relative to the locally reproduced reference than relative to the
+shipped parquet (ratio ≈ 1.2); the criterion is evaluated only against the shipped parquet, the local
+Brian2 run is an informational cross-check (see results/oracle_brian2/sugarR_ours.parquet, if present)."""
 import time
 
 import numpy as np
@@ -28,7 +29,7 @@ MN9 = "720575940660219265"
 
 
 def oracle_rates(raw_dir, filename="sugarR.parquet"):
-    """id → Гц: среднее число спайков на повтор из parquet эталона, делённое на t_run = 1 с."""
+    """id → Hz: average number of spikes per repeat from the reference parquet, divided by t_run = 1 s."""
     df = pd.read_parquet(raw_dir / filename, columns=["trial", "flywire_id"])
     n_run = int(df["trial"].nunique())
     counts = df.groupby("flywire_id").size() / n_run / (T_MS / 1000.0)
@@ -65,8 +66,8 @@ def run(graph=None, seeds=(0, 1, 2), save=True, device="auto"):
            "spearman_top200": rho, "active_ours": int((ours_s > 1).sum()), "active_oracle": int((orc > 1).sum()),
            "mn9_sugar_bitter_hz": mn9_sb, "suppression": mn9_sb / mn9_o if mn9_o else float("inf"),
            "run_ids": ids, "device": device_used, "seconds": time.time() - t0}
-    # информационно (в критерии не входит): сравнение с локально воспроизведённым Brian2 (см. gate2
-    # fix round 1 в журнале) — если файл есть, не перегоняем ворота, просто читаем сохранённый parquet.
+    # informational only (not part of the criteria): comparison with a locally reproduced Brian2 run (see gate2
+    # fix round 1 in the journal) — if the file exists we do not rerun the gate, just read the saved parquet.
     local = paths.RESULTS / "oracle_brian2" / "sugarR_ours.parquet"
     if local.exists():
         orc_local = oracle_rates(paths.RESULTS / "oracle_brian2", filename="sugarR_ours.parquet")

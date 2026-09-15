@@ -1,5 +1,5 @@
-"""Ворота 1. Червь: переднее касание → «назад» сильнее «вперёд», заднее — наоборот.
-Известно с 1985 года; здесь проверяется, что схема + наши предположения это дают."""
+"""Gate 1. Worm: anterior touch → "backward" stronger than "forward", posterior touch — the reverse.
+Known since 1985; here we check that the circuit plus our assumptions reproduce it."""
 from ...sim import graded, stimulus
 from ...store import graph as graph_mod
 from .. import groups

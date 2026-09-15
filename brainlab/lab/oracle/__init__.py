@@ -1,1 +1,1 @@
-"""Эталоны: необязательные прогоны чужого кода (Brian2 у Shiu 2024) для сверки с нашими воротами."""
+"""References: optional runs of third-party code (Brian2 in Shiu 2024) to cross-check against our gates."""

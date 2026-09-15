@@ -3,11 +3,11 @@ const canvas = $("c"), ctx = canvas.getContext("2d");
 const stateCanvas = $("state"), sctx = stateCanvas.getContext("2d");
 let graph = null, run = null, frame = 0, timer = null, selected = null, runIndex = null;
 let datasetsList = [], currentDs = null, currentDsInfo = null, currentPop = null;
-let graphLoading = null, graphDs = null;  // graphLoading — промис текущей загрузки графа (см. loadRun)
+let graphLoading = null, graphDs = null;  // graphLoading — the promise of the current graph load (see loadRun)
 
 function reportError(e) {
   console.error(e);
-  $("status").textContent = "ошибка: " + (e && e.message ? e.message : String(e));
+  $("status").textContent = "error: " + (e && e.message ? e.message : String(e));
 }
 const COLORS = { neuron: "#6cf", end_organ: "#886", GABA: "#f66", "": "#6cf" };
 const STATE_COLORS = ["#6cf", "#f66", "#6f6", "#fc6", "#c6f", "#fff", "#f90", "#0ff"];
@@ -83,7 +83,7 @@ canvas.addEventListener("click", ev => {
   for (const n of graph.nodes) { const [x, y] = toScreen(n); const d = (x - ev.offsetX) ** 2 + (y - ev.offsetY) ** 2; if (d < bd) { bd = d; best = n; } }
   selected = best ? best.name : null;
   const deg = graph.edges.filter(e => e.pre === selected || e.post === selected);
-  $("info").textContent = best ? `${best.name}\nкласс: ${best.class}\nмедиатор: ${best.transmitter || "—"}\nсвязей: ${deg.length}` : "";
+  $("info").textContent = best ? `${best.name}\nclass: ${best.class}\ntransmitter: ${best.transmitter || "—"}\nedges: ${deg.length}` : "";
   draw();
 });
 
@@ -99,22 +99,22 @@ async function loadPopulations(id) {
 
 async function loadGraph() {
   const id = currentDs;
-  // Загрузку графа держим отдельным промисом (graphLoading), чтобы loadRun(),
-  // вызванный параллельно (смена #run во время await ниже), мог дождаться
-  // актуального graph вместо того, чтобы уйти в /api/run без names на большом наборе.
+  // Keep the graph load as its own promise (graphLoading) so a loadRun() invoked
+  // concurrently (a #run change during the await below) can wait for the
+  // current graph instead of going to /api/run without names on a big dataset.
   const fetchGraph = (async () => {
     if (currentDsInfo && currentDsInfo.big) {
       const focus = $("group").value;
-      if (!focus) { $("status").textContent = `${id}: выберите группу`; graph = null; graphDs = id; draw(); return; }
-      $("status").textContent = "подграф " + id + "…";
+      if (!focus) { $("status").textContent = `${id}: select a group`; graph = null; graphDs = id; draw(); return; }
+      $("status").textContent = "subgraph " + id + "…";
       graph = await api(`/api/graph/${id}?focus=${encodeURIComponent(focus)}&top=300&min_count=5`);
       graphDs = id;
-      $("status").textContent = `${id}: подграф ${focus}, ${graph.nodes.length} клеток, ${graph.edges.length} связей`;
+      $("status").textContent = `${id}: subgraph ${focus}, ${graph.nodes.length} cells, ${graph.edges.length} edges`;
     } else {
-      $("status").textContent = "граф " + id + "…";
+      $("status").textContent = "graph " + id + "…";
       graph = await api(`/api/graph/${id}?min_count=2`);
       graphDs = id;
-      $("status").textContent = `${id}: ${graph.nodes.length} клеток, ${graph.edges.length} связей`;
+      $("status").textContent = `${id}: ${graph.nodes.length} cells, ${graph.edges.length} edges`;
     }
     draw();
   })();
@@ -139,9 +139,9 @@ async function loadRun(id) {
     run = null; runIndex = null; $("time").max = 0; draw(); drawState(); return;
   }
   if (currentDsInfo && currentDsInfo.big) {
-    if (graphLoading) await graphLoading;  // дождаться подграфа, если он ещё грузится
+    if (graphLoading) await graphLoading;  // wait for the subgraph if it is still loading
     if (!graph || graphDs !== currentDs) {
-      $("status").textContent = `${currentDs}: сначала выберите группу`;
+      $("status").textContent = `${currentDs}: select a group first`;
       return;
     }
   }
@@ -152,7 +152,7 @@ async function loadRun(id) {
   run = await api(url);
   runIndex = new Map(run.names.map((name, i) => [name, i]));
   frame = 0; $("time").max = Math.max(0, run.rates.length - 1); $("time").value = 0;
-  $("status").textContent = `прогон ${id}: ${run.rates.length} окон по ${run.window_ms} мс, оценка ${run.valence}`;
+  $("status").textContent = `run ${id}: ${run.rates.length} windows of ${run.window_ms} ms, valence ${run.valence}`;
   draw();
   drawState();
 }

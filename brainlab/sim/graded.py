@@ -1,10 +1,10 @@
-"""Плавная модель для червя: клетки не спайкуют, активность r ∈ [0, 1].
+"""Graded model for the worm: cells do not spike, activity r ∈ [0, 1].
 
-Допущения:
-- dv/dt = (−v + gain·(W_chem·(r·x)) + g_gap·(W_gap·v − deg·v) + I_стим + шум)/τ;
-- r = σ((v − θ)/w); x — ресурс синапсов (Цодыкс–Маркрам), при std=None x ≡ 1;
-- шум — гауссов, амплитуда `noise` из стимула, зерно фиксировано.
-Все числа — предположения, а не измерения; их проверяют ворота.
+Assumptions:
+- dv/dt = (−v + gain·(W_chem·(r·x)) + g_gap·(W_gap·v − deg·v) + I_stim + noise)/τ;
+- r = σ((v − θ)/w); x is the synaptic resource (Tsodyks–Markram), x ≡ 1 when std=None;
+- noise is Gaussian, amplitude `noise` from the stimulus, a fixed seed.
+All numbers are assumptions, not measurements; the gates check them.
 """
 import numpy as np
 
@@ -51,8 +51,8 @@ class Graded:
                 x = x + p["dt_ms"] * ((1.0 - x) / std["tau_rec_ms"] - std["u"] * r * x)
                 x = np.clip(x, 0.0, 1.0)
             rates[k // per_win] += r
-        # делим каждое окно на фактическое число шагов в нём (последнее окно может быть короче
-        # per_win, если duration_ms не кратно window_ms), а не всегда на per_win.
+        # divide each window by the actual number of steps it contains (the last window can be shorter
+        # than per_win if duration_ms is not a multiple of window_ms), not always by per_win.
         counts = np.full(windows, per_win, np.float32)
         if steps % per_win:
             counts[-1] = steps % per_win

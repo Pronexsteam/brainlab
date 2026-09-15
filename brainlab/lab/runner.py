@@ -1,4 +1,4 @@
-"""Опыт из YAML → прогон → оценка. Файл опыта — единственный вход, код прогон не меняет."""
+"""An experiment from YAML → run → evaluation. The experiment file is the only input, the code does not change the run."""
 from pathlib import Path
 
 import yaml
@@ -14,17 +14,17 @@ def load_experiment(path):
     spec = yaml.safe_load(Path(path).read_text(encoding="utf-8"))
     for key in ("name", "dataset", "model", "duration_ms", "stimulus"):
         if key not in spec:
-            raise ValueError("в опыте нет поля %s" % key)
+            raise ValueError("experiment is missing field %s" % key)
     spec.setdefault("params", {}); spec.setdefault("seed", 0); spec.setdefault("window_ms", 50.0)
     spec.setdefault("extreme", False)
     return spec
 
 
 def _expand_groups(spec):
-    """Разворачивает stimulus.pulses[].names вида "group:<имя>" в список из populations.
-    Возвращает (развёрнутый stimulus-словарь, {индекс импульса: исходное "group:<имя>"}, [пустые группы]).
-    Пустая группа (нет подписей в наборе) не роняет прогон: импульс пропускается, имя группы
-    попадает в список пустых групп."""
+    """Expands stimulus.pulses[].names of the form "group:<name>" into a list from populations.
+    Returns (the expanded stimulus dict, {pulse index: original "group:<name>"}, [empty groups]).
+    An empty group (no labels in the dataset) does not fail the run: the pulse is skipped, the group's
+    name is added to the list of empty groups."""
     st = {"noise": spec["stimulus"].get("noise", 0.0), "pulses": []}
     used = {}
     empty = []
@@ -47,7 +47,7 @@ def _expand_groups(spec):
 def run_experiment(path, save=True):
     spec = load_experiment(path)
     gspec = spec.get("graph", {}) or {}
-    g = graph_mod.get(spec["dataset"], normalize=gspec.get("normalize"))   # graph: {normalize: fafb_783} — нормировка входов
+    g = graph_mod.get(spec["dataset"], normalize=gspec.get("normalize"))   # graph: {normalize: fafb_783} — input normalization
     model = MODELS[spec["model"]](g, seed=int(spec["seed"]), **spec["params"])
     st_dict, used_groups, empty_groups = _expand_groups(spec)
     st = stimulus.Stimulus.from_dict(st_dict)
@@ -84,10 +84,10 @@ def evaluate(r, spec):
     first = r.group_rate(names, *v["first"])
     last = r.group_rate(names, *v["last"])
     no_response = first < 1e-9
-    # first ≈ 0 — на первый стимул нет ответа вообще (не «стало хуже»/«стало лучше», а брак
-    # прогона: сравнивать не с чем); раньше ratio=inf давал valence=-1 через pain_if_above
-    # (нет ответа выглядело как боль), теперь valence=0 и честный флаг no_response.
-    ratio = last / first if not no_response else None      # None, не inf: json/JS не знают Infinity
+    # first ≈ 0 — there is no response at all to the first stimulus (not "got worse"/"got better", but a
+    # defective run: nothing to compare against); previously ratio=inf gave valence=-1 via pain_if_above
+    # (no response looked like pain), now valence=0 and an honest no_response flag.
+    ratio = last / first if not no_response else None      # None, not inf: json/JS do not know Infinity
     out = {"first": first, "last": last, "ratio": ratio}
     if "novel" in v:
         out["novel"] = r.group_rate(_names(v.get("novel_group", v["group"]), r.dataset), *v["novel"])
@@ -101,6 +101,6 @@ def evaluate(r, spec):
         elif ratio > v.get("pain_if_above", float("inf")):
             valence = -1
     if r.flags.get("silent") or r.flags.get("seizure"):
-        valence = -1                                   # брак — всегда боль
+        valence = -1                                   # a defective run is always pain
     out["valence"] = valence
     return out

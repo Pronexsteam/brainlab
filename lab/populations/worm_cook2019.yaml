@@ -1,5 +1,5 @@
 dataset: worm_cook2019
-source: brainlab/lab/groups.py (groups.WORM), явные списки, классический контур касания (Chalfie 1985)
+source: brainlab/lab/groups.py (groups.WORM), explicit lists, the classic touch circuit (Chalfie 1985)
 groups:
   anterior_touch: {names: [ALML, ALMR, AVM]}
   posterior_touch: {names: [PLML, PLMR]}

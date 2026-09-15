@@ -1,6 +1,6 @@
-"""Локальный обзор: http-сервер на stdlib. Читает базу и results, сам ничего не считает
-(кроме раскладки графа, которая кэшируется для маленьких наборов; подграф больших наборов
-не кэшируется — он зависит от запроса)."""
+"""Local viewer: an http server on stdlib. Reads the database and results, computes nothing itself
+(except the graph layout, which is cached for small datasets; a big dataset's subgraph is not
+cached — it depends on the request)."""
 import json
 import mimetypes
 import threading
@@ -18,11 +18,11 @@ from ..store import db, graph as graph_mod
 
 STATIC = Path(__file__).parent / "static"
 
-BIG_DATASET = 5000  # выше этого числа клеток граф целиком не отдаём и не раскладываем
+BIG_DATASET = 5000  # above this many cells we neither hand out nor lay out the whole graph
 
 
 class BadRequest(Exception):
-    """Запрос синтаксически верный, но его нельзя выполнить (нужен focus/names) — 400, не 404."""
+    """The request is syntactically valid but cannot be executed (needs focus/names) — 400, not 404."""
 
 
 def layout(g):
@@ -52,7 +52,7 @@ def _datasets():
             if n > BIG_DATASET:
                 row["big"] = True
             rows.append(row)
-        rows.sort(key=lambda r: r["neurons"])  # маленькие наборы — первыми, страница грузит ds[0]
+        rows.sort(key=lambda r: r["neurons"])  # small datasets first, the page loads ds[0]
         return rows
     finally:
         conn.close()
@@ -68,15 +68,15 @@ def _dataset_exists(ds):
 
 def _populations_payload(ds):
     if not _dataset_exists(ds):
-        raise KeyError("нет набора %s" % ds)
-    groups = populations.resolve(ds)  # KeyError, если нет lab/populations/<ds>.yaml
+        raise KeyError("no such dataset %s" % ds)
+    groups = populations.resolve(ds)  # KeyError if lab/populations/<ds>.yaml is missing
     return {"groups": {name: len(names) for name, names in groups.items()},
             "state": populations.state_groups(ds)}
 
 
 def _cell_types(ds, names):
-    """cell_type для перечисленных имён — берём из базы напрямую: Graph/npz-кэш его не хранит,
-    а тянуть весь набор через populations.resolve()/db.neurons() ради подграфа не нужно."""
+    """cell_type for the given names — read straight from the database: the Graph/npz cache does
+    not store it, and pulling the whole dataset through populations.resolve()/db.neurons() just for a subgraph is unnecessary."""
     conn = db.connect()
     try:
         out = {}
@@ -94,14 +94,14 @@ def _cell_types(ds, names):
 
 
 def _subgraph_payload(g, ds, focus, top, min_count):
-    fnames = populations.names(ds, focus)  # KeyError, если группы нет
+    fnames = populations.names(ds, focus)  # KeyError if the group does not exist
     if not fnames:
-        raise KeyError("группа %s в наборе %s пуста" % (focus, ds))
+        raise KeyError("group %s in dataset %s is empty" % (focus, ds))
     focus_idx = g.idx(fnames)
     focus_set = set(int(i) for i in focus_idx)
     W = (abs(g.W_chem) + g.W_gap).tocsr()
     strength = np.asarray(W[focus_idx, :].sum(axis=0)).ravel() + np.asarray(W[:, focus_idx].sum(axis=1)).ravel()
-    strength[focus_idx] = 0  # сами клетки группы не считаем себе соседями
+    strength[focus_idx] = 0  # do not count the group's own cells as their own neighbors
     order = np.argsort(-strength)
     neighbors = [int(i) for i in order[:top] if strength[i] > 0]
     sel = sorted(focus_set | set(neighbors))
@@ -138,11 +138,11 @@ def _subgraph_payload(g, ds, focus, top, min_count):
 
 def _graph_payload(ds, min_count, focus=None, top=300):
     if not _dataset_exists(ds):
-        raise KeyError("нет набора %s" % ds)
+        raise KeyError("no such dataset %s" % ds)
     g = graph_mod.get(ds)
     if g.n > BIG_DATASET:
         if not focus:
-            raise BadRequest("набор большой: укажите focus=<группа>")
+            raise BadRequest("dataset is big: specify focus=<group>")
         return _subgraph_payload(g, ds, focus, top, min_count)
     pos = layout(g)
     nodes = [{"name": n, "class": g.cell_class[i], "transmitter": g.transmitter[i], "x": pos[n][0], "y": pos[n][1]}
@@ -161,7 +161,7 @@ def _graph_payload(ds, min_count, focus=None, top=300):
 
 def _run_payload(run_id, names=None):
     if "/" in run_id or "\\" in run_id or ".." in run_id:
-        raise KeyError("недопустимый run_id: %r" % run_id)
+        raise KeyError("invalid run_id: %r" % run_id)
     r = result.load(paths.RESULTS / run_id)
     if names:
         pos = {n: i for i, n in enumerate(r.names)}
@@ -171,7 +171,7 @@ def _run_payload(run_id, names=None):
         return {"id": r.id, "names": sel_names, "window_ms": r.window_ms, "rates": rates,
                 "flags": r.flags, "valence": r.valence, "extra": r.extra, "stimulus": r.stimulus}
     if len(r.names) > BIG_DATASET:
-        raise BadRequest("в наборе больше %d клеток: укажите names=<a,b,c>" % BIG_DATASET)
+        raise BadRequest("dataset has more than %d cells: specify names=<a,b,c>" % BIG_DATASET)
     return {"id": r.id, "names": r.names, "window_ms": r.window_ms, "rates": r.rates.tolist(),
             "flags": r.flags, "valence": r.valence, "extra": r.extra, "stimulus": r.stimulus}
 
@@ -205,7 +205,7 @@ class Handler(SimpleHTTPRequestHandler):
                     top = int(q.get("top", ["300"])[0])
                     min_count = float(q.get("min_count", ["2"])[0])
                 except ValueError:
-                    raise BadRequest("top/min_count должны быть числами")
+                    raise BadRequest("top/min_count must be numbers")
                 return self._json(_graph_payload(u.path.split("/")[3], min_count, focus, top))
             if u.path == "/api/runs":
                 return self._json(result.list_runs())
@@ -226,7 +226,7 @@ def serve(port=8765, block=True):
     mimetypes.add_type("application/javascript", ".js")
     srv = ThreadingHTTPServer(("127.0.0.1", port), Handler)
     if block:
-        print("обзор: http://127.0.0.1:%d" % srv.server_address[1])
+        print("viewer: http://127.0.0.1:%d" % srv.server_address[1])
         srv.serve_forever()
         return srv
     threading.Thread(target=srv.serve_forever, daemon=True).start()

@@ -1,8 +1,8 @@
 dataset: malecns_09
 groups:
-  # sugar/bitter/water_grn — только губные (labellum) ГРН, как у Shiu 2024; версии без
-  # ограничения по органу — *_all (этот скан включает вентральный нервный канатик, поэтому
-  # без ограничения по cell_sub_class метка sugar/bitter/water ловит ещё ноги и крылья).
+  # sugar/bitter/water_grn — labellum GRNs only, as in Shiu 2024; the versions without an
+  # organ restriction are *_all (this scan includes the ventral nerve cord, so without the
+  # cell_sub_class restriction the sugar/bitter/water label also catches legs and wings).
   sugar_grn:       {where: {cell_function_detailed: {startswith: sugar}, cell_sub_class: {contains: labellum}}}
   sugar_grn_right: {where: {cell_function_detailed: {startswith: sugar}, cell_sub_class: {contains: labellum}, side: right}}
   bitter_grn:      {where: {cell_function_detailed: {startswith: bitter}, cell_sub_class: {contains: labellum}}}

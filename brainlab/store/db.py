@@ -1,7 +1,8 @@
-"""База схем: наборы, нейроны, связи. Одна SQLite на всё, набор — столбец dataset.
+"""Schema database: datasets, neurons, edges. One SQLite database for everything, a dataset is the
+dataset column.
 
-Перерегистрация набора удаляет его старые нейроны и связи: база всегда строится
-из сырых файлов заново, а не правится по месту.
+Re-registering a dataset deletes its old neurons and edges: the database is always rebuilt
+from the raw files, not patched in place.
 """
 import hashlib
 import json
@@ -42,9 +43,9 @@ def connect(path=None):
 
 
 def register_dataset(conn, dataset_id, source, version, license, files, params):
-    """Не коммитит: набор регистрируется одной транзакцией с add_neurons/add_edges на уровне
-    загрузчика (commit там же, rollback при исключении — задача 5 финальной волны), иначе
-    упавший на середине генератор рёбер оставлял бы в базе набор без части/всех рёбер."""
+    """Does not commit: the dataset is registered in one transaction together with add_neurons/add_edges
+    at the loader level (commit there, rollback on exception — task 5 of the final wave), otherwise
+    an edge generator that fails halfway through would leave a dataset in the database missing some or all edges."""
     conn.execute("DELETE FROM neurons WHERE dataset = ?", (dataset_id,))
     conn.execute("DELETE FROM edges WHERE dataset = ?", (dataset_id,))
     conn.execute("INSERT OR REPLACE INTO datasets (id, source, version, license, files, params) VALUES (?,?,?,?,?,?)",
@@ -52,7 +53,7 @@ def register_dataset(conn, dataset_id, source, version, license, files, params):
 
 
 def add_neurons(conn, dataset_id, rows):
-    """Не коммитит — см. register_dataset."""
+    """Does not commit — see register_dataset."""
     conn.executemany(
         "INSERT OR REPLACE INTO neurons VALUES (?,?,?,?,?,?,?,?)",
         [(dataset_id, r["name"], r.get("cell_type", ""), r.get("cell_class", ""), r.get("transmitter", ""),
@@ -60,8 +61,8 @@ def add_neurons(conn, dataset_id, rows):
 
 
 def add_edges(conn, dataset_id, rows, chunk=200_000):
-    """Вставка порциями (на 3–15 млн рёбер список кортежей целиком не нужен в памяти), но не
-    коммитит — см. register_dataset."""
+    """Inserted in chunks (with 3-15 million edges the full list of tuples should not sit in memory
+    at once), but does not commit — see register_dataset."""
     buf = []
     for r in rows:
         buf.append((dataset_id, r["pre"], r["post"], r["kind"], float(r["count"]), int(r.get("sign", 0))))

@@ -1,8 +1,8 @@
 dataset: fafb_783
 groups:
-  # sugar/bitter/water_grn — только губные (labellum) ГРН, как у Shiu 2024; версии без
-  # ограничения по органу — *_all (у BANC/MaleCNS та же метка охватывает ещё ноги и крылья,
-  # т.к. эти сканы включают вентральный нервный канатик, а FAFB — только мозг).
+  # sugar/bitter/water_grn — labellum GRNs only, as in Shiu 2024; the versions without an
+  # organ restriction are *_all (in BANC/MaleCNS the same label also covers legs and wings,
+  # because those scans include the ventral nerve cord, while FAFB is brain-only).
   sugar_grn:       {where: {cell_function_detailed: {startswith: sugar}, cell_sub_class: {contains: labellum}}}
   sugar_grn_right: {where: {cell_function_detailed: {startswith: sugar}, cell_sub_class: {contains: labellum}, side: right}}
   bitter_grn:      {where: {cell_function_detailed: {startswith: bitter}, cell_sub_class: {contains: labellum}}}

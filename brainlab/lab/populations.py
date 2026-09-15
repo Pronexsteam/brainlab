@@ -1,6 +1,6 @@
-"""Группы клеток набора по правилам из lab/populations/<набор>.yaml (дизайн §7а).
-Правила читают столбцы таблицы neurons и ключи extra; списки имён кэшируются в
-data/cache/<набор>_populations.json и пересчитываются, если yaml новее кэша."""
+"""A dataset's cell groups, by the rules in lab/populations/<dataset>.yaml (design §7a).
+The rules read columns of the neurons table and extra keys; name lists are cached in
+data/cache/<dataset>_populations.json and recomputed if the yaml is newer than the cache."""
 import json
 import os
 
@@ -17,7 +17,7 @@ def _file(dataset_id):
 def load(dataset_id):
     f = _file(dataset_id)
     if not f.exists():
-        raise KeyError("нет файла групп %s" % f)
+        raise KeyError("no groups file %s" % f)
     return yaml.safe_load(f.read_text(encoding="utf-8"))
 
 
@@ -27,7 +27,7 @@ def _match_value(actual, cond):
         if "startswith" in cond: return actual.startswith(str(cond["startswith"]))
         if "contains" in cond: return str(cond["contains"]) in actual
         if "in" in cond: return actual in [str(x) for x in cond["in"]]
-        raise ValueError("непонятное условие %r" % cond)
+        raise ValueError("unrecognized condition %r" % cond)
     return actual == str(cond)
 
 
@@ -37,8 +37,8 @@ def _match(row, where):
             if not any(_match(row, w) for w in cond):
                 return False
             continue
-        # столбец строки всегда важнее extra, даже если он "" (пусто в столбце — тоже ответ,
-        # не повод смотреть в extra); в extra смотрим только для полей вне столбцов таблицы.
+        # a row's column always takes precedence over extra, even if it is "" (empty in the column
+        # is still an answer, not a reason to look in extra); we look in extra only for fields outside the table columns.
         actual = row.get(field, row["extra"].get(field)) if field in row else row["extra"].get(field)
         if not _match_value(actual, cond):
             return False
@@ -46,7 +46,7 @@ def _match(row, where):
 
 
 def _current_version(dataset_id, conn):
-    """Версия набора в базе прямо сейчас (для сравнения с версией, записанной в кэш групп)."""
+    """The dataset's version in the database right now (for comparison with the version recorded in the groups cache)."""
     owns = conn is None
     conn = conn or db.connect()
     try:
@@ -65,8 +65,8 @@ def resolve(dataset_id, conn=None):
             c = json.loads(cache.read_text(encoding="utf-8"))
         except json.JSONDecodeError:
             c = {}
-        # кэш действителен, если yaml не менялся И (базы нет / база не новее кэша ИЛИ версия
-        # набора в кэше совпадает с текущей — смена данных в базе меняет version, задача 2 финальной волны)
+        # the cache is valid if the yaml has not changed AND (there is no db / the db is not newer than the cache OR the
+        # dataset version in the cache matches the current one — changing data in the db changes version, task 2 of the final wave)
         db_fresh = True
         if paths.DB_PATH.exists():
             db_mtime = os.path.getmtime(paths.DB_PATH)
@@ -97,7 +97,7 @@ def resolve(dataset_id, conn=None):
 def names(dataset_id, group, conn=None):
     r = resolve(dataset_id, conn)
     if group not in r:
-        raise KeyError("в наборе %s нет группы %s (есть: %s)" % (dataset_id, group, sorted(r)))
+        raise KeyError("dataset %s has no group %s (available: %s)" % (dataset_id, group, sorted(r)))
     return r[group]
 
 

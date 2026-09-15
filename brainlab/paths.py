@@ -1,4 +1,4 @@
-"""Пути проекта. Всё считается от корня, абсолютных путей в модулях нет."""
+"""Project paths. Everything is computed from the root, there are no absolute paths in modules."""
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent

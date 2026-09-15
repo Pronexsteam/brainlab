@@ -1,11 +1,12 @@
-"""Граф набора: матрицы связей для симулятора и подписи клеток.
+"""A dataset's graph: connectivity matrices for the simulator and cell labels.
 
-W_chem[post, pre] = знак * число синапсов: активность = W_chem @ r.
-W_gap симметрична, вес = число контактов. Кэш — npz рядом с базой, пересобирается,
-если база новее кэша.
+W_chem[post, pre] = sign * synapse count: activity = W_chem @ r.
+W_gap is symmetric, weight = number of contacts. Cache is an npz next to the database, rebuilt
+if the database is newer than the cache.
 
-Нормировка входов по типу клетки (get(ds, normalize=ref), normalize_inputs) — перенос модели
-Shiu (абсолютный вес мВ/синапс, подобран под плотность FAFB) на скан с другой плотностью синапсов.
+Input normalization by cell type (get(ds, normalize=ref), normalize_inputs) — carries Shiu's
+model (an absolute mV/synapse weight, tuned to FAFB's synapse density) over to a scan with a
+different synapse density.
 """
 import json
 import os
@@ -28,7 +29,7 @@ class Graph:
     W_gap: sp.csr_matrix
     version: str = ""
     files: dict = None
-    params: dict = None    # datasets.params набора (sign_rule/min_count/...), задача 1 финальной волны
+    params: dict = None    # the dataset's datasets.params (sign_rule/min_count/...), task 1 of the final wave
 
     def __post_init__(self):
         self.files = self.files or {}
@@ -46,7 +47,7 @@ class Graph:
 def build(conn, dataset_id):
     info = db.dataset_info(conn, dataset_id)
     if info is None:
-        raise KeyError("набор %r не зарегистрирован в базе (dataset_info пуст) — сначала загрузи его загрузчиком" % dataset_id)
+        raise KeyError("dataset %r is not registered in the database (dataset_info is empty) — load it with a loader first" % dataset_id)
     ns = db.neurons(conn, dataset_id)
     names = [n["name"] for n in ns]
     index = {n: i for i, n in enumerate(names)}
@@ -63,18 +64,18 @@ def build(conn, dataset_id):
     e = ok & elec
     W_gap = sp.csr_matrix((cnt[e], (post[e], pre[e])), shape=(n, n), dtype=np.float32)
     W_gap.sum_duplicates()
-    # одна запись на строку csv (b=post, a=pre); большинство контактов и так перечислены в обе
-    # стороны, но 26 из 2698 — только в одну, поэтому симметризуем через максимум (не через
-    # (W+Wᵀ)/2, иначе двусторонние записи снова считались бы дважды).
+    # one entry per csv row (b=post, a=pre); most contacts are already listed both ways,
+    # but 26 of 2698 are listed only one way, so we symmetrize by taking the maximum (not
+    # (W+Wᵀ)/2, which would double-count the two-way entries again).
     W_gap = W_gap.maximum(W_gap.T).tocsr()
     files = json.loads(info.get("files") or "{}")
     params = json.loads(info.get("params") or "{}")
-    W_chem.eliminate_zeros()    # рёбра со знаком 0 (неизвестный медиатор) не должны быть явными нулями в nnz
+    W_chem.eliminate_zeros()    # edges with sign 0 (unknown transmitter) must not be explicit zeros in nnz
     return Graph(dataset_id, names, [x["cell_class"] for x in ns], [x["transmitter"] for x in ns], W_chem, W_gap,
                 version=info.get("version") or "", files=files, params=params)
 
 
-FACTOR_MIN, FACTOR_MAX = 0.2, 5.0     # границы множителя нормировки (не крутить под ответ MN9)
+FACTOR_MIN, FACTOR_MAX = 0.2, 5.0     # bounds of the normalization factor (do not tune this to fit the MN9 response)
 NORM_RULE = "per-cell input scaled to median input of same fafb_cell_type in ref"
 
 
@@ -105,8 +106,8 @@ def load_cache(dataset_id, normalize=None):
 
 
 def _cell_types(conn, dataset_id, names):
-    """Тип клетки для нормировки, в порядке names: extra["fafb_cell_type"] (BANC/MaleCNS), если
-    пусто — cell_type (FAFB). conn=None — открыть свою."""
+    """Cell type for normalization, in the order of names: extra["fafb_cell_type"] (BANC/MaleCNS), if
+    empty — cell_type (FAFB). conn=None — open one's own."""
     owns_conn = conn is None
     conn = conn or db.connect()
     try:
@@ -118,21 +119,21 @@ def _cell_types(conn, dataset_id, names):
 
 
 def _in_abs(W):
-    """Суммарный вход клетки: Σ|W_chem[j, :]| — число синапсов до знака; рёбра со знаком 0
-    вне W_chem (eliminate_zeros в build) и не считаются."""
+    """Total input of a cell: Σ|W_chem[j, :]| — synapse count before applying sign; edges with sign 0
+    are outside W_chem (eliminate_zeros in build) and are not counted."""
     return np.asarray(abs(W).sum(axis=1)).ravel().astype(np.float64)
 
 
 def normalize_inputs(g, g_ref, types, ref_types, factor_min=FACTOR_MIN, factor_max=FACTOR_MAX):
-    """Правило (допущение): привести суммарный вход каждой клетки g к медиане входа клеток того же
-    типа в опорном графе g_ref. in[j] = Σ|W_chem[j,:]| (по abs, до знака); target[t] = медиана in_ref
-    по клеткам ref типа t; для клетки j типа t (types[j], у BANC/MaleCNS это fafb_cell_type, если
-    пусто — cell_type): если t есть в target и in[j] > 0, factor[j] = clip(target[t]/in[j],
-    factor_min, factor_max), иначе 1.0. Строка j W_chem (все входы клетки) умножается на factor[j];
-    W_gap не трогается. Возвращает новый Graph (исходный не меняется): dataset тот же,
-    version + " norm:" + ref, params["normalize"] со статистикой."""
+    """Rule (assumption): scale each cell's total input in g to the median input of cells of the same
+    type in the reference graph g_ref. in[j] = Σ|W_chem[j,:]| (by abs, before sign); target[t] = median
+    of in_ref over ref cells of type t; for a cell j of type t (types[j]; for BANC/MaleCNS this is
+    fafb_cell_type, if empty — cell_type): if t is in target and in[j] > 0, factor[j] =
+    clip(target[t]/in[j], factor_min, factor_max), otherwise 1.0. Row j of W_chem (all of the cell's
+    inputs) is multiplied by factor[j]; W_gap is left untouched. Returns a new Graph (the original is
+    unchanged): same dataset, version + " norm:" + ref, params["normalize"] with statistics."""
     if len(types) != g.n or len(ref_types) != g_ref.n:
-        raise ValueError("список типов не совпадает по длине с графом")
+        raise ValueError("the list of types does not match the graph's length")
     in_ref = _in_abs(g_ref.W_chem)
     by_type = {}
     for t, v in zip(ref_types, in_ref):
@@ -162,14 +163,14 @@ def normalize_inputs(g, g_ref, types, ref_types, factor_min=FACTOR_MIN, factor_m
 
 
 def _cache_fresh(f):
-    # кэш есть и (базы нет ИЛИ кэш не старее базы) — используем кэш, не пересобираем
-    # пустой граф, если рабочая база вдруг отсутствует.
+    # the cache exists and (there is no database OR the cache is not older than the database) — use the
+    # cache, don't rebuild an empty graph if the working database happens to be missing.
     return f.exists() and (not paths.DB_PATH.exists() or os.path.getmtime(f) >= os.path.getmtime(paths.DB_PATH))
 
 
 def get(dataset_id, conn=None, normalize=None):
-    """Граф набора из кэша или базы. normalize=<ref> — граф с входами, нормированными на опорный
-    набор ref (normalize_inputs), кэш data/cache/<ds>__norm-<ref>.npz."""
+    """A dataset's graph from cache or from the database. normalize=<ref> — a graph with inputs
+    normalized against a reference dataset ref (normalize_inputs), cached at data/cache/<ds>__norm-<ref>.npz."""
     if normalize:
         if _cache_fresh(_cache_file(dataset_id, normalize)):
             g = load_cache(dataset_id, normalize)

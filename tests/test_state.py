@@ -11,8 +11,8 @@ def _run():
 
 
 def test_vector_and_attach():
-    # float32-хранение rates (как в RunResult) не даёт десятичное 0.3/0.6 точным битом float64,
-    # поэтому сравнение — через pytest.approx, а не ==; сама величина (среднее по группе) верна.
+    # float32 storage of rates (as in RunResult) does not give the decimal 0.3/0.6 an exact float64 bit
+    # pattern, so the comparison uses pytest.approx, not ==; the value itself (the group mean) is correct.
     r = _run()
     v = state.vector(r, {"ab": ["a", "b"], "none": [], "c": ["c", "zzz"]})
     assert v["ab"] == pytest.approx([0.5, 0.3]) and v["none"] == [0.0, 0.0] and v["c"] == pytest.approx([0.5, 0.6])

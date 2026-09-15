@@ -5,7 +5,7 @@ from brainlab.store.loaders import worm_cook2019 as worm
 
 
 def _build_slow(conn, ds):
-    """Старый способ сборки — через список словарей; служит эталоном для новой сборки."""
+    """The old way of building — via a list of dicts; serves as the reference for the new build."""
     import scipy.sparse as sp
     ns = db.neurons(conn, ds)
     names = [n["name"] for n in ns]

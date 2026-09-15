@@ -27,4 +27,4 @@ def test_fetch_skips_existing_and_downloads_missing(tmp_path, monkeypatch):
 def test_fetch_unknown_dataset():
     import pytest
     with pytest.raises(KeyError):
-        fetch.fetch("нет_такого", download=lambda u, d: None)
+        fetch.fetch("no_such_dataset", download=lambda u, d: None)

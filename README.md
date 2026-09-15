@@ -25,11 +25,11 @@ python selftest.py
 Expected gate-2 line on our machine (RTX 5050, seed 0; Poisson input is sampled, so expect ±5 % on rates):
 
 ```
-ворота 2: {"mn9_ours_hz": 111.0, "mn9_oracle_hz": 93.27, "ratio": 1.19, "spearman_top200": 0.926,
+gate 2: {"mn9_ours_hz": 111.0, "mn9_oracle_hz": 93.27, "ratio": 1.19, "spearman_top200": 0.926,
            "active_ours": 372, "active_oracle": 389, "suppression": 0.018, "mn9_local_brian2_hz": 82.67, "passed": true}
-ворота 1 (червь, закрыт решением от 2026-09-14): красный
-ворота 2 (муха): зелёный
-ИТОГ: КРАСНЫЙ            # red because gate 1 is red — by design
+gate 1 (worm, closed by the 2026-09-14 decision): red
+gate 2 (fly): green
+VERDICT: RED            # red because gate 1 is red — by design
 ```
 
 Criteria for gate 2 (fixed before the first run, never changed): 0.6 ≤ MN9 ratio ≤ 1.4 vs the authors' shipped `sugarR.parquet`; Spearman ≥ 0.7 over their 200 most active cells; active-cell count within 0.7–1.4×; sugar+bitter ≤ 0.5 × sugar. If `brian2` is installed, `brainlab/lab/oracle/shiu_brian2.py` also runs the authors' own code (we get MN9 82.7 Hz from it vs 93.3 Hz in their shipped file; our 111 Hz is 1.35× the local Brian2 run — inside the gate, but the margin is on that side).

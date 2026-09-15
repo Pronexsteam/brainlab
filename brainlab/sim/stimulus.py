@@ -1,9 +1,9 @@
-"""Стимул: список импульсов «эти клетки, такое значение, в таком окне».
-kind="current": значение — единицы модели (плавная: доли порога; LIF: мВ за мс к напряжению).
-kind="poisson": значение — частота, Гц; каждая клетка получает независимый пуассоновский вход
-(LIF: событие прибавляет w_syn·f_poi к v, как PoissonInput(target_var='v') у Shiu 2024 — скачок
-в напряжение, а не в синаптическую переменную g; это авторский механизм, не наше допущение).
-Плавная модель kind="poisson" не поддерживает и бросает ValueError."""
+"""Stimulus: a list of pulses "these cells, this value, in this window".
+kind="current": the value is in model units (graded: fractions of threshold; LIF: mV per ms added to voltage).
+kind="poisson": the value is a rate, Hz; each cell gets an independent Poisson input
+(LIF: an event adds w_syn·f_poi to v, as PoissonInput(target_var='v') does in Shiu 2024 — a jump
+in voltage, not in the synaptic variable g; this is the authors' mechanism, not our assumption).
+The graded model does not support kind="poisson" and raises ValueError."""
 from dataclasses import asdict, dataclass, field
 
 import numpy as np
@@ -40,12 +40,12 @@ class Stimulus:
         return cls([Pulse(**p) for p in d.get("pulses", [])], float(d.get("noise", 0.0)))
 
     def compile(self, graph, dt_ms):
-        """Индексы клеток и границы окон в шагах — один раз на прогон, не на каждом шаге."""
+        """Cell indices and window boundaries in steps — computed once per run, not on every step."""
         return [CompiledPulse(graph.idx(p.names), float(p.value), int(round(p.t0_ms / dt_ms)),
                               int(round(p.t1_ms / dt_ms)), p.kind) for p in self.pulses]
 
     def drive(self, graph, t_ms, dt_ms=1.0):
-        """Ток на шаге t_ms (для плавной модели). Пуассоновские импульсы здесь не участвуют."""
+        """Current at step t_ms (for the graded model). Poisson pulses do not take part here."""
         key = (id(graph), graph.dataset, graph.n, dt_ms)
         if getattr(self, "_compiled_key", None) != key:
             self._compiled = self.compile(graph, dt_ms)
@@ -54,7 +54,7 @@ class Stimulus:
         k = int(round(t_ms / dt_ms))
         for c in self._compiled:
             if c.kind == "poisson":
-                raise ValueError("kind='poisson' поддерживает только LIF")
+                raise ValueError("kind='poisson' is supported only by LIF")
             if c.k0 <= k < c.k1:
                 d[c.idx] += c.value
         return d

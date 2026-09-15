@@ -1,7 +1,8 @@
-"""Сырьё наборов: откуда качать и куда класть. data/<набор>/raw/<имя>. Готовые файлы не перекачиваются.
+"""Dataset raw files: where to download from and where to put them. data/<dataset>/raw/<name>.
+Files already present are not re-downloaded.
 
-Адреса — открытый бакет лаборатории Lee (без входа) и репозиторий эталонной модели Shiu 2024.
-При смене адресов правится только таблица FILES (дизайн §16)."""
+Addresses — the Lee lab's open bucket (no login) and the Shiu 2024 reference model's repository.
+When addresses change, only the FILES table needs editing (design §16)."""
 import shutil
 import urllib.request
 from pathlib import Path
@@ -32,7 +33,7 @@ FILES = {
 }
 
 
-# первичные таблицы синапсов (2 и 20 ГБ) — только для lab/analysis/banc_native_synapses.py
+# raw synapse tables (2 and 20 GB) — only for lab/analysis/banc_native_synapses.py
 FILES_EXTRA = {
     "fafb_783": [(_LEE + "fafb_783/fafb_783_synapses.parquet", "fafb_783_synapses.parquet")],
     "banc_888": [(_LEE + "banc_888/banc_888_synapses_v3_enriched.parquet", "banc_888_synapses_v3_enriched.parquet")],
@@ -41,7 +42,7 @@ FILES_EXTRA = {
 
 def raw_dir(dataset_id):
     if dataset_id == "worm":
-        return paths.DATA / "worm"          # исторически без подпапки raw (загрузчик червя читает отсюда)
+        return paths.DATA / "worm"          # historically without a raw subfolder (the worm loader reads from here)
     return paths.DATA / dataset_id / "raw"
 
 
@@ -55,7 +56,7 @@ def _download(url, dest):
 
 def fetch(dataset_id, only=None, download=_download, extra=False):
     if dataset_id not in FILES:
-        raise KeyError("набор %r не в таблице FILES" % dataset_id)
+        raise KeyError("dataset %r is not in the FILES table" % dataset_id)
     d = raw_dir(dataset_id)
     d.mkdir(parents=True, exist_ok=True)
     out = []
@@ -64,7 +65,7 @@ def fetch(dataset_id, only=None, download=_download, extra=False):
             continue
         dest = d / name
         if not dest.exists():
-            print("качаю", url)
+            print("downloading", url)
             download(url, dest)
         out.append(dest)
     return out

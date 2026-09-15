@@ -1,8 +1,8 @@
-"""Брак прогона: тишина (сеть молчит) и судорога (почти все клетки на потолке всё время).
-Пороги — на долях максимума (SEIZURE_LEVEL=0.9 и т.д.), поэтому одинаковы для плавной
-модели (r ∈ [0, 1] уже предел) и для LIF: LIF нормирует rates на max_rate =
-1 / round(refractory_ms/dt) — предельную частоту, допустимую рефрактерностью (как у Brian2),
-так что 1.0 у обеих моделей значит «на пределе» (см. докстринг lif.py)."""
+"""Run defects: silence (the network stays quiet) and seizure (nearly all cells pinned at the ceiling
+the whole time). Thresholds are in fractions of the maximum (SEIZURE_LEVEL=0.9 etc.), so they are the
+same for the graded model (r ∈ [0, 1] is already the ceiling) and for LIF: LIF normalizes rates by
+max_rate = 1 / round(refractory_ms/dt) — the rate ceiling allowed by refractoriness (as in Brian2),
+so 1.0 means "at the ceiling" for both models (see the lif.py docstring)."""
 import numpy as np
 
 SILENT_MAX = 1e-4

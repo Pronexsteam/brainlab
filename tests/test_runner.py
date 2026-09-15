@@ -23,8 +23,8 @@ def test_group_stimulus_expands_to_names(worm_raw, tmp_path, monkeypatch):
 
 
 def test_evaluate_no_response_on_first_is_not_pain(monkeypatch):
-    """first ≈ 0 (нет ответа на первый стимул) — не боль (ratio=inf раньше ложно проходил
-    pain_if_above), а честный no_response=True и valence=0."""
+    """first ~= 0 (no response to the first stimulus) is not pain (ratio=inf used to falsely pass
+    pain_if_above), but an honest no_response=True and valence=0."""
     class R:
         dataset = "toy"
         flags = {}
@@ -35,7 +35,7 @@ def test_evaluate_no_response_on_first_is_not_pain(monkeypatch):
     out = runner.evaluate(R(), spec)
     assert out["no_response"] is True
     assert out["valence"] == 0
-    assert out["ratio"] is None            # None, не inf: json/JS не знают Infinity
+    assert out["ratio"] is None            # None, not inf: json/JS do not know Infinity
 
 
 def test_habituation_experiment(worm_raw, tmp_path, monkeypatch):
@@ -46,14 +46,14 @@ def test_habituation_experiment(worm_raw, tmp_path, monkeypatch):
     r = runner.run_experiment(spec_path, save=True)
     ev = runner.evaluate(r, spec)
     print(ev)
-    assert ev["ratio"] < 0.8, ev                  # 10-е постукивание слабее первого
-    assert ev["novel"] > ev["last"]               # новый стимул возвращает ответ
+    assert ev["ratio"] < 0.8, ev                  # the 10th tap is weaker than the first
+    assert ev["novel"] > ev["last"]               # a novel stimulus restores the response
     assert r.valence == 1 and r.id and (tmp_path / r.id / "run.json").exists()
 
 
 def test_graph_normalize_key_passed_to_graph_get(tmp_path, monkeypatch):
-    """Ключ graph: {normalize: <ref>} в YAML опыта уходит в graph_mod.get(ds, normalize=...)
-    и записывается в extra["graph"]."""
+    """The graph: {normalize: <ref>} key in the experiment YAML flows into graph_mod.get(ds, normalize=...)
+    and is recorded in extra["graph"]."""
     calls = {}
 
     class G:

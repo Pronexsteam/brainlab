@@ -30,10 +30,10 @@ valence:
   pain_if_above: 1.0
 extreme: false
 notes: >
-  Привыкание к постукиванию (Rankin 1990): повторный задний стимул даёт всё меньший ответ,
-  новый стимул ответ возвращает. Депрессия синапсов — предположение, взятое у flybrain.
-  Замер на backward_cmd — ложная посылка: в этом наборе (Cook 2019) у PLM нет ни одного
-  химического выхода вообще, только щелевые контакты на PVC (и PLN/PDE/PHC/LUA/hyp), а
-  щелевые контакты в модели не депрессируют. Поэтому замер на backward_cmd, как и ожидается,
-  НЕ покажет привыкания, пока не изменено это допущение модели (например, депрессия щелевых
-  контактов) или сами данные. Оставлено как записанное допущение, а не исправлено задним числом.
+  Tap habituation (Rankin 1990): a repeated posterior stimulus gives a progressively smaller
+  response, a novel stimulus restores the response. Synaptic depression is an assumption, taken
+  from flybrain. Measuring on backward_cmd is a false premise: in this dataset (Cook 2019), PLM
+  has no chemical output at all, only gap junctions onto PVC (and PLN/PDE/PHC/LUA/hyp), and gap
+  junctions do not depress in the model. So the measurement on backward_cmd, as expected, will
+  NOT show habituation until this model assumption is changed (e.g. gap-junction depression) or
+  the data itself is. Left as a recorded assumption rather than retroactively fixed.

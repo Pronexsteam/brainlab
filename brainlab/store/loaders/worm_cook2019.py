@@ -1,19 +1,19 @@
-"""Червь C. elegans, гермафродит, схема Cook и др. 2019 (файл herm_full_edgelist.csv из OpenWorm/c302).
+"""C. elegans worm, hermaphrodite, Cook et al. 2019 wiring diagram (file herm_full_edgelist.csv from OpenWorm/c302).
 
-Допущения:
-- класс клетки: «neuron», если имя есть в схеме White 1986 (aconnectome_white_1986_whole.csv)
-  или в списке 20 глоточных нейронов; иначе «end_organ» (мышцы, железы и т.п.);
-- знак химической связи по пресинаптической клетке: ГАМК-ергические (классический
-  список 26 клеток по Gendrel и др. 2016) → −1, остальные → +1. Тормозный глутамат
-  (GluCl) не учитываем — это параметр sign_rule в базе, его можно сменить;
-- щелевые контакты (electrical) без знака, вес — число контактов.
+Assumptions:
+- cell class: "neuron" if the name is present in the White 1986 diagram (aconnectome_white_1986_whole.csv)
+  or in the list of 20 pharyngeal neurons; otherwise "end_organ" (muscles, glands, etc.);
+- sign of a chemical connection, by the presynaptic cell: GABAergic (the classic list of 26 cells
+  per Gendrel et al. 2016) → −1, everything else → +1. We do not account for inhibitory glutamate
+  (GluCl) — this is the sign_rule parameter in the database, it can be changed;
+- gap junctions (electrical) are unsigned, weight = number of contacts.
 
-Расхождение в именовании между файлами: herm_full_edgelist.csv пишет номера моторных
-нейронов (AS, DA, DB, DD, VA, VB, VC, VD) с ведущим нулём (DD01, VD01, ...), а
-aconnectome_white_1986_whole.csv и список ГАМК-клеток — без него (DD1, VD1, ...).
-Без нормализации 66 моторных нейронов (DD1-6, VD1-13, VA1-9, VB1-9, VC1-6, DA1-9,
-DB1-7, AS1-9) попадали в «end_organ», а число ГАМК-связей падало с 26 до 11.
-Ведущий ноль срезаем (_normalize) перед классификацией и записью в базу.
+A naming mismatch between the files: herm_full_edgelist.csv writes motor-neuron numbers
+(AS, DA, DB, DD, VA, VB, VC, VD) with a leading zero (DD01, VD01, ...), while
+aconnectome_white_1986_whole.csv and the GABA cell list do not (DD1, VD1, ...).
+Without normalization, 66 motor neurons (DD1-6, VD1-13, VA1-9, VB1-9, VC1-6, DA1-9,
+DB1-7, AS1-9) ended up in "end_organ", and the GABA edge count dropped from 26 to 11.
+The leading zero is stripped (_normalize) before classification and before writing to the database.
 """
 import csv
 import re
@@ -35,7 +35,7 @@ _ZERO_PAD = re.compile(r"^([A-Za-z]+)(0\d+)$")
 
 
 def _normalize(name):
-    """Срезает ведущий ноль в номере клетки: DD01 -> DD1 (см. допущения выше)."""
+    """Strips the leading zero in a cell number: DD01 -> DD1 (see the assumptions above)."""
     m = _ZERO_PAD.match(name)
     return m.group(1) + str(int(m.group(2))) if m else name
 
@@ -76,8 +76,8 @@ def load(conn, raw_dir):
                      "cell_class": cls, "transmitter": "GABA" if name in GABA_NEURONS else "",
                      "side": side, "region": "pharynx" if name in PHARYNGEAL else "", "extra": {}})
     try:
-        # register_dataset/add_neurons/add_edges не коммитят сами — одна транзакция на загрузчик,
-        # при исключении откат: набор либо загружен целиком, либо его в базе нет (задача 5 финальной волны)
+        # register_dataset/add_neurons/add_edges do not commit themselves — one transaction per loader,
+        # rolled back on exception: the dataset is either loaded in full or absent from the database (task 5 of the final wave)
         db.register_dataset(conn, DATASET_ID, SOURCE, "cook2019-c302", LICENSE, files,
                             {"sign_rule": SIGN_RULE, "gaba_count": len(GABA_NEURONS), "pharyngeal": sorted(PHARYNGEAL)})
         db.add_neurons(conn, DATASET_ID, rows)

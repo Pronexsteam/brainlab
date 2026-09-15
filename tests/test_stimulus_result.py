@@ -25,7 +25,7 @@ def test_pulse_kind_roundtrip_and_compile():
     back = stimulus.Stimulus.from_dict({"pulses": [{"names": ["a"], "value": 1.0, "t0_ms": 0, "t1_ms": 10}]})
     assert back.pulses[0].kind == "current"
 
-    class G:  # минимальный граф для compile
+    class G:  # a minimal graph for compile
         names = ["a", "b"]; n = 2
         def idx(self, names): return __import__("numpy").array([self.names.index(x) for x in names])
     comp = st.compile(G(), dt_ms=0.5)

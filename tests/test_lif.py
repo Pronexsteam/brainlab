@@ -12,22 +12,22 @@ def _graph(tmp_db, worm_raw):
 
 def test_lif_deterministic_and_spikes(tmp_db, worm_raw):
     g = _graph(tmp_db, worm_raw)
-    # 5.0 мВ/мс (было 2.0 при прежней форме LIF): в форме Shiu щелевые контакты к покоящимся соседям
-    # (deg 35-46 у ALM/AVM) — дополнительная утечка g_gap·deg, и 2 мВ/мс до порога не дотягивает.
+    # 5.0 mV/ms (used to be 2.0 with the old LIF form): in the Shiu form, gap junctions to resting neighbors
+    # (deg 35-46 for ALM/AVM) add extra leak g_gap·deg, so 2 mV/ms falls short of the threshold.
     st = stimulus.Stimulus([stimulus.Pulse(["ALML", "ALMR", "AVM"], 5.0, 100, 400)])
     a = lif.LIF(g, seed=1, device="cpu").run(st, 500, window_ms=50)
     b = lif.LIF(g, seed=1, device="cpu").run(st, 500, window_ms=50)
     assert np.array_equal(a.rates, b.rates)
     assert a.rates.shape == (10, g.n) and a.rates.max() <= 1.0
-    assert a.group_rate(["ALML", "ALMR", "AVM"], 150, 400) > 0.05     # стимулированные клетки спайкуют
-    assert a.group_rate(["ALML", "ALMR", "AVM"], 0, 100) == 0.0        # до стимула тишина
+    assert a.group_rate(["ALML", "ALMR", "AVM"], 150, 400) > 0.05     # stimulated cells spike
+    assert a.group_rate(["ALML", "ALMR", "AVM"], 0, 100) == 0.0        # silence before the stimulus
     assert a.model == "lif" and "w_syn" in a.params
 
 
 def test_lif_seizure_at_rate_ceiling(tmp_db, worm_raw):
-    """Огромный постоянный ток на все клетки: каждая спайкует на пределе, разрешённом
-    рефрактерностью (раз в round(refractory_ms/dt) шагов, ISI ≥ refractory_ms, как у Brian2
-    ≥ 2.1); нормированный rates должен быть ≈1.0, а не ≤0.333, и flags.check обязан увидеть судорогу."""
+    """A huge constant current on all cells: each spikes at the limit allowed by
+    refractoriness (once every round(refractory_ms/dt) steps, ISI >= refractory_ms, as in Brian2
+    >= 2.1); normalized rates should be ~1.0, not <=0.333, and flags.check must see a seizure."""
     g = _graph(tmp_db, worm_raw)
     st = stimulus.Stimulus([stimulus.Pulse(list(g.names), 1000.0, 0, 1000)])
     r = lif.LIF(g, seed=0, device="cpu").run(st, 1000, window_ms=100)
@@ -36,10 +36,10 @@ def test_lif_seizure_at_rate_ceiling(tmp_db, worm_raw):
 
 
 def test_lif_std_reduces_output():
-    """Прежде тест был пустым (0 ≤ 0, PLM без химических выходов на PVC при w_syn=0.275 калибровки
-    мухи). Заменён на toy-граф _chain(400) из test_lif_shiu (a→b, 400 синапсов, w_syn·400 =
-    110 мВ в g → b спайкует): 5 импульсов тока на a; с депрессией (std) частота b на последнем
-    импульсе строго меньше, чем на первом, без депрессии — не меньше."""
+    """This test used to be vacuous (0 <= 0, PLM has no chemical output onto PVC at the fly's
+    calibration w_syn=0.275). Replaced with the toy graph _chain(400) from test_lif_shiu (a->b, 400 synapses,
+    w_syn·400 = 110 mV into g -> b spikes): 5 current pulses onto a; with depression (std), b's rate on the
+    last pulse is strictly less than on the first, without depression — not less."""
     from tests.test_lif_shiu import _chain
     g = _chain(400)
     pulses = [stimulus.Pulse(["a"], 200.0, 100 + i * 500, 102 + i * 500, kind="current") for i in range(5)]

@@ -1,33 +1,34 @@
-"""Три полных скана взрослой мухи в едином формате лаборатории Lee (открытый бакет, см. fetch.FILES):
-fafb_783 (FlyWire v783, самка, мозг), banc_888 (самка, мозг + брюшной узел), malecns_09 (самец, ЦНС).
+"""Three full adult fly scans in the Lee lab's shared format (open bucket, see fetch.FILES):
+fafb_783 (FlyWire v783, female, brain), banc_888 (female, brain + ventral nerve cord), malecns_09 (male, CNS).
 
-Допущения:
-- знак ребра по предсказанному медиатору пресинаптической клетки (дизайн §4): ацетилхолин +1,
-  ГАМК −1, глутамат −1 (у мухи GluCl), гистамин −1 (у мухи фоторецепторы → ламина через
-  гистамин-хлорные каналы HisCl, тормозный), моноамины (дофамин, серотонин, октопамин) и
-  тирамин — MONOAMINE_SIGN (см. ниже, выверено по эталону Shiu только для дофамина/серотонина/
-  октопамина; тирамин к тому же классу отнесён по решению постановщика, отдельно по эталону не
-  проверялся), "unclear"/пусто/что угодно ещё не из списка — 0 (ребро остаётся в базе с нулевым
-  знаком, в W_chem не попадает);
-- порог хранения min_count = 5 синапсов на пару (как «connections» у Codex); эталонный набор
-  Shiu хранит всё, поэтому сравнивать числа рёбер между ними нельзя напрямую;
-- cell_class в базе = super_class meta (верхний класс); подробные cell_class/cell_sub_class — в extra;
-- skipped_edges_unknown_id считает только рёбра, прошедшие фильтр min_count (у кого pre или post
-  не нашлись в meta) — это нижняя оценка доли «потерянной» связности: рёбра ниже min_count в этот
-  счётчик не попадают, даже если их pre/post тоже отсутствуют в meta.
+Assumptions:
+- edge sign by the presynaptic cell's predicted transmitter (design §4): acetylcholine +1,
+  GABA −1, glutamate −1 (GluCl in the fly), histamine −1 (in the fly, photoreceptors → lamina
+  via histamine-chloride HisCl channels, inhibitory), monoamines (dopamine, serotonin, octopamine)
+  and tyramine — MONOAMINE_SIGN (see below, cross-checked against the Shiu reference only for
+  dopamine/serotonin/octopamine; tyramine was assigned to the same class by the author's decision
+  and was not separately checked against the reference), "unclear"/empty/anything else not on the
+  list — 0 (the edge stays in the database with a zero sign, does not enter W_chem);
+- storage threshold min_count = 5 synapses per pair (like "connections" in Codex); the Shiu
+  reference dataset stores everything, so edge counts between them cannot be compared directly;
+- cell_class in the database = the meta super_class (top-level class); detailed cell_class/cell_sub_class
+  are in extra;
+- skipped_edges_unknown_id counts only edges that passed the min_count filter (whose pre or post
+  was not found in meta) — this is a lower-bound estimate of the fraction of "lost" connectivity:
+  edges below min_count are not counted here, even if their pre/post is also missing from meta.
 
-Знак моноаминов (шаг 3б, выверка по эталону Shiu 2024, flywire_630_shiu, id v630 = v783 у
-выживших клеток): в meta FAFB v783 клеток с neurotransmitter_predicted в {dopamine, serotonin,
-octopamine} — 8853; из них id нашлись как Presynaptic_ID в parquet эталона (2023_03_23_connectivity
-_630_final.parquet) у 7373 клеток, дающих 656999 исходящих рёбер. Знак по столбцу Excitatory:
+Sign of monoamines (step 3b, cross-checked against the Shiu 2024 reference, flywire_630_shiu, id v630 = v783
+for surviving cells): in FAFB v783 meta, cells with neurotransmitter_predicted in {dopamine, serotonin,
+octopamine} number 8853; of those, ids were found as Presynaptic_ID in the reference parquet (2023_03_23_connectivity
+_630_final.parquet) for 7373 cells, giving 656999 outgoing edges. Sign by the Excitatory column:
 dopamine 570757 pos / 5 neg, serotonin 78202 pos / 125 neg, octopamine 7859 pos / 51 neg;
-суммарно 656818 pos / 181 neg, доля положительных 0.9997 (по каждому медиатору отдельно —
-0.9999 / 0.9984 / 0.9936). У эталона моноамины практически однозначно положительные (редкие
-минусы — шум предсказания на единичных клетках), поэтому MONOAMINE_SIGN = 1. Это выверка
-допущения по чужим данным, не подгонка под ворота (моноамины не входят в ворота 1/2).
+combined 656818 pos / 181 neg, positive fraction 0.9997 (per transmitter separately —
+0.9999 / 0.9984 / 0.9936). In the reference, monoamines are almost unambiguously positive (the rare
+negatives are prediction noise on individual cells), so MONOAMINE_SIGN = 1. This is a cross-check of
+the assumption against third-party data, not a fit to the gates (monoamines are not part of gates 1/2).
 
-Список рёбер читается батчами лениво через pyarrow (у MaleCNS 3,2 ГБ): открытый файл/память
-memory_map закрываются, как только генератор рёбер исчерпан или прерван исключением.
+The edge list is read lazily in batches via pyarrow (3.2 GB for MaleCNS): the open file/memory_map
+is closed as soon as the edge generator is exhausted or interrupted by an exception.
 """
 import hashlib
 from pathlib import Path
@@ -46,14 +47,14 @@ SPECS = {
     "malecns_09": {"meta": "malecns_09_meta.feather", "edges": "malecns_09_simple_edgelist.feather", "id_col": "malecns_09_id",
                    "version": "malecns_09", "source": "MaleCNS v0.9 via lee-lab bucket", "license": "CC-BY 4.0"},
 }
-MONOAMINE_SIGN = 1            # выверено в задаче 4, шаг 3б по эталону Shiu (см. докстринг выше)
+MONOAMINE_SIGN = 1            # cross-checked in task 4, step 3b against the Shiu reference (see the docstring above)
 SIGN = {"acetylcholine": 1, "gaba": -1, "glutamate": -1, "histamine": -1}
-MONOAMINES = ("dopamine", "serotonin", "octopamine", "tyramine")   # -> MONOAMINE_SIGN (см. допущения)
+MONOAMINES = ("dopamine", "serotonin", "octopamine", "tyramine")   # -> MONOAMINE_SIGN (see the assumptions)
 SIGN_RULE = ("presynaptic neurotransmitter_predicted: ach +1, gaba -1, glutamate -1, histamine -1, "
              "dopamine/serotonin/octopamine/tyramine MONOAMINE_SIGN, unclear/unknown/empty 0")
 EXTRA_COLS = ["cell_class", "cell_sub_class", "cell_function", "cell_function_detailed", "flow",
               "neurotransmitter_score", "fafb_cell_type", "body_part_sensory", "body_part_effector"]
-_NA_STRINGS = ("", "nan", "none", "<na>")   # регистронезависимо: сентинели пропуска в строковых столбцах Arrow
+_NA_STRINGS = ("", "nan", "none", "<na>")   # case-insensitive: missing-value sentinels in Arrow string columns
 
 
 def _s(v):
@@ -66,8 +67,8 @@ def _s(v):
 
 
 def rule_hash(min_count):
-    """Короткий хеш правила знаков + порога: меняется вместе со сменой SIGN_RULE/min_count/
-    MONOAMINE_SIGN, поэтому смена правила меняет version набора в базе (задача 1 финальной волны)."""
+    """Short hash of the sign rule + threshold: changes together with SIGN_RULE/min_count/
+    MONOAMINE_SIGN, so a rule change changes the dataset's version in the database (task 1 of the final wave)."""
     h = hashlib.sha256((SIGN_RULE + str(min_count) + str(MONOAMINE_SIGN)).encode("utf-8")).hexdigest()
     return h[:8]
 
@@ -85,10 +86,10 @@ def _sign(tr):
 
 
 def _edge_batches(edge_f):
-    """Ленивый генератор батчей рёбер: memory_map/reader открываются один раз и закрываются
-    (finally), как только источник исчерпан или прерван исключением. Пробуем IPC file-формат
-    (у всех трёх наборов Lee-lab на 2026-09-14 — он), при ArrowInvalid — IPC stream (батчи там
-    читаются по одному без произвольного доступа, тоже лениво)."""
+    """Lazy generator of edge batches: memory_map/reader are opened once and closed
+    (finally) as soon as the source is exhausted or interrupted by an exception. We try the IPC file
+    format first (it is what all three Lee-lab datasets use as of 2026-09-14); on ArrowInvalid we fall
+    back to IPC stream (batches there are read one at a time without random access, also lazily)."""
     mm = pa.memory_map(str(edge_f), "r")
     try:
         reader = pa.ipc.open_file(mm)
@@ -116,7 +117,7 @@ def load(conn, raw_dir, dataset_id, min_count=5):
     meta = ft.read_table(meta_f).to_pandas()
     idc = spec["id_col"]
     if idc not in meta.columns:
-        raise ValueError("в %s нет столбца %s" % (meta_f.name, idc))
+        raise ValueError("%s has no column %s" % (meta_f.name, idc))
     rows, sign_of = [], {}
     for r in meta.itertuples(index=False):
         d = r._asdict()
@@ -130,7 +131,7 @@ def load(conn, raw_dir, dataset_id, min_count=5):
     schema = next(src)
     need = {"pre", "post", "count"}
     if not need <= set(schema.names):
-        raise ValueError("в %s нет столбцов %s (есть: %s)" % (edge_f.name, sorted(need - set(schema.names)), schema.names))
+        raise ValueError("%s is missing columns %s (has: %s)" % (edge_f.name, sorted(need - set(schema.names)), schema.names))
     stats = {"edges": 0, "skipped_edges_unknown_id": 0}
 
     def gen():
@@ -148,8 +149,8 @@ def load(conn, raw_dir, dataset_id, min_count=5):
                 yield {"pre": a, "post": c, "kind": "chemical", "count": float(k), "sign": sign_of[a]}
 
     try:
-        # одна транзакция на загрузчик (см. worm_cook2019.load): упавший на середине генератор
-        # рёбер (в т.ч. в _edge_batches) откатывает и register_dataset, и add_neurons — набора в базе нет
+        # one transaction per loader (see worm_cook2019.load): an edge generator that fails halfway
+        # through (including inside _edge_batches) rolls back both register_dataset and add_neurons — the dataset is absent from the database
         db.register_dataset(conn, dataset_id, spec["source"], version_string(spec["version"], min_count), spec["license"], files,
                             {"sign_rule": SIGN_RULE, "min_count": min_count, "monoamine_sign": MONOAMINE_SIGN, "id_col": idc})
         db.add_neurons(conn, dataset_id, rows)

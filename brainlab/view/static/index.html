@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="ru"><head><meta charset="utf-8"><title>BrainLab</title>
+<html lang="en"><head><meta charset="utf-8"><title>BrainLab</title>
 <style>
  body{margin:0;background:#111;color:#ddd;font:14px system-ui}
  #bar{padding:8px;display:flex;gap:12px;align-items:center;background:#1a1a1a}
@@ -11,13 +11,13 @@
 </style></head>
 <body>
 <div id="bar">
- <label>набор <select id="dataset"></select></label>
- <label>группа <select id="group"></select></label>
- <label>цвет <select id="color"><option value="class">класс</option><option value="transmitter">медиатор</option></select></label>
- <label>прогон <select id="run"><option value="">—</option></select></label>
+ <label>dataset <select id="dataset"></select></label>
+ <label>group <select id="group"></select></label>
+ <label>color <select id="color"><option value="class">class</option><option value="transmitter">transmitter</option></select></label>
+ <label>run <select id="run"><option value="">—</option></select></label>
  <button id="play">▶</button>
  <input id="time" type="range" min="0" max="0" value="0" style="width:240px">
- <span id="status">загрузка</span>
+ <span id="status">loading</span>
 </div>
 <canvas id="c"></canvas>
 <div id="info"></div>

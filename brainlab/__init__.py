@@ -1,1 +1,1 @@
-"""BrainLab: оцифрованные мозги — хранилище, симулятор, опыты, обзор."""
+"""BrainLab: digitized brains — storage, simulator, experiments, viewer."""

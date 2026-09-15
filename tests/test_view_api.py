@@ -16,7 +16,7 @@ def _get(port, path):
 @pytest.fixture(scope="module")
 def srv():
     if not paths.DB_PATH.exists():
-        pytest.skip("нет рабочей базы data/store.sqlite")
+        pytest.skip("no working database data/store.sqlite")
     s = server.serve(port=0, block=False)
     yield s
     s.shutdown()
@@ -49,18 +49,18 @@ def test_datasets_ordered_small_first(srv):
     ds = json.loads(body)
     counts = [d["neurons"] for d in ds]
     assert counts == sorted(counts)
-    assert ds[0]["id"] == "worm_cook2019"  # самый маленький набор — страница грузит его первым
+    assert ds[0]["id"] == "worm_cook2019"  # the smallest dataset — the page loads it first
     assert not ds[0].get("big")
     big = [d for d in ds if d["id"] != "worm_cook2019"]
     if big:
-        assert all(d.get("big") for d in big)  # мушиные наборы (>5000 клеток) помечены
+        assert all(d.get("big") for d in big)  # fly datasets (>5000 cells) are flagged
 
 
 def test_unknown_dataset_is_404(srv):
     port = srv.server_address[1]
     try:
         _get(port, "/api/graph/nope")
-        assert False, "должно было упасть с 404"
+        assert False, "should have raised 404"
     except urllib.error.HTTPError as e:
         assert e.code == 404
         body = json.loads(e.read())

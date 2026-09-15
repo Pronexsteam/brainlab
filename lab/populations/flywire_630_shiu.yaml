@@ -1,5 +1,5 @@
 dataset: flywire_630_shiu
-source: figures.ipynb и example.ipynb репозитория philshiu/Drosophila_brain_model
+source: figures.ipynb and example.ipynb of the philshiu/Drosophila_brain_model repository
 groups:
   sugar_grn_right:
     names: ["720575940624963786", "720575940630233916", "720575940637568838", "720575940638202345",

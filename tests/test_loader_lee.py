@@ -50,8 +50,8 @@ def test_missing_column_is_loud(tmp_db, tmp_path):
 
 
 def test_nan_string_sentinel_not_kept(tmp_db, tmp_path):
-    """Регресс на находку код-ревью: Arrow-строковый столбец хранит пропуск как литеральную
-    строку "NaN" (не как настоящий null), и она не должна попасть в extra как непустое значение."""
+    """Regression for a code-review finding: an Arrow string column stores a missing value as the
+    literal string "NaN" (not as a true null), and it must not end up in extra as a non-empty value."""
     raw = _toy(tmp_path)
     meta = ft.read_table(raw / "fafb_783_meta.feather").to_pandas()
     meta.loc[meta["fafb_783_id"] == "1", "neurotransmitter_score"] = "NaN"
@@ -68,7 +68,7 @@ def test_nan_string_sentinel_not_kept(tmp_db, tmp_path):
 def test_load_real_fafb(tmp_db):
     raw = paths.DATA / "fafb_783" / "raw"
     if not (raw / "fafb_783_simple_edgelist.feather").exists():
-        pytest.skip("нет сырья fafb_783")
+        pytest.skip("no fafb_783 raw data")
     conn = db.connect(tmp_db)
     s = fly_lee.load(conn, raw, "fafb_783")
     assert s["neurons"] == 144837 and 3_400_000 < s["edges"] < 3_600_000
