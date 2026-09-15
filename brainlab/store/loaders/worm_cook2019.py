@@ -89,3 +89,10 @@ def load(conn, raw_dir):
     return {"neurons": sum(1 for c in nodes.values() if c == "neuron"),
             "other": sum(1 for c in nodes.values() if c == "end_organ"),
             "edges": len(edges), "gaba": sum(1 for n in nodes if n in GABA_NEURONS)}
+
+
+if __name__ == "__main__":
+    from .. import fetch
+    c = db.connect()
+    print(load(c, fetch.raw_dir("worm")))
+    c.close()

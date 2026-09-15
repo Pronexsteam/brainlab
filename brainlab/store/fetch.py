@@ -12,7 +12,12 @@ from .db import sha256_file
 _LEE = "https://storage.googleapis.com/lee-lab_brain-and-nerve-cord-fly-connectome/compiled_data/"
 _SHIU = "https://raw.githubusercontent.com/philshiu/Drosophila_brain_model/main/"
 
+_C302 = "https://raw.githubusercontent.com/openworm/c302/master/c302/data/"
+
 FILES = {
+    "worm": [(_C302 + "herm_full_edgelist.csv", "herm_full_edgelist.csv"),
+             (_C302 + "aconnectome_white_1986_whole.csv", "aconnectome_white_1986_whole.csv"),
+             (_C302 + "Bentley_et_al_2016_expression.csv", "Bentley_et_al_2016_expression.csv")],
     "fafb_783": [(_LEE + "fafb_783/fafb_783_meta.feather", "fafb_783_meta.feather"),
                  (_LEE + "fafb_783/fafb_783_simple_edgelist.feather", "fafb_783_simple_edgelist.feather")],
     "banc_888": [(_LEE + "banc_888/banc_888_meta.feather", "banc_888_meta.feather"),
@@ -27,7 +32,16 @@ FILES = {
 }
 
 
+# первичные таблицы синапсов (2 и 20 ГБ) — только для lab/analysis/banc_native_synapses.py
+FILES_EXTRA = {
+    "fafb_783": [(_LEE + "fafb_783/fafb_783_synapses.parquet", "fafb_783_synapses.parquet")],
+    "banc_888": [(_LEE + "banc_888/banc_888_synapses_v3_enriched.parquet", "banc_888_synapses_v3_enriched.parquet")],
+}
+
+
 def raw_dir(dataset_id):
+    if dataset_id == "worm":
+        return paths.DATA / "worm"          # исторически без подпапки raw (загрузчик червя читает отсюда)
     return paths.DATA / dataset_id / "raw"
 
 
@@ -39,13 +53,13 @@ def _download(url, dest):
     part.replace(dest)
 
 
-def fetch(dataset_id, only=None, download=_download):
+def fetch(dataset_id, only=None, download=_download, extra=False):
     if dataset_id not in FILES:
         raise KeyError("набор %r не в таблице FILES" % dataset_id)
     d = raw_dir(dataset_id)
     d.mkdir(parents=True, exist_ok=True)
     out = []
-    for url, name in FILES[dataset_id]:
+    for url, name in FILES[dataset_id] + (FILES_EXTRA.get(dataset_id, []) if extra else []):
         if only and name not in only:
             continue
         dest = d / name
@@ -63,6 +77,7 @@ def manifest(dataset_id):
 
 if __name__ == "__main__":
     import sys
-    for ds in sys.argv[1:] or FILES:
-        for p in fetch(ds):
+    args = [a for a in sys.argv[1:] if a != "--extra"]
+    for ds in args or FILES:
+        for p in fetch(ds, extra="--extra" in sys.argv):
             print(p, p.stat().st_size)
