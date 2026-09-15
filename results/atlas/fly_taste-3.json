@@ -1,0 +1,18 @@
+{
+ "banc_888_norm2": {
+  "run_id": "20260915-063110-00",
+  "valence": 1,
+  "flags": {
+   "silent": false,
+   "seizure": false,
+   "mean_rate": 0.0026645713951438665
+  },
+  "empty_groups": [],
+  "version": "banc_888 v3 (lee-lab compiled_data, 2026; rule f1355d3e) norm:fafb_783",
+  "min_count": 5,
+  "sign_rule": "presynaptic neurotransmitter_predicted: ach +1, gaba -1, glutamate -1, histamine -1, dopamine/serotonin/octopamine/tyramine MONOAMINE_SIGN, unclear/unknown/empty 0",
+  "baseline": 0.0,
+  "sugar": 44.44444382732564,
+  "sugar_bitter": 0.0
+ }
+}

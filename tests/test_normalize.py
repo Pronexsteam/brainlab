@@ -47,6 +47,50 @@ def test_normalize_factors_and_clip():
     assert p["cells_scaled"] == 2 and p["cells_unscaled"] == 3
     assert p["factor_median"] == pytest.approx(1.0)                    # median over all cells: [1,1,1,0.2,4] -> 1
     assert "rule" in p and g.params["min_count"] == 5                  # old params are preserved
+    assert p["median_over"] == "positive" and p["strip_auto"] is False and p["regions"] is None
+
+
+def test_median_ignores_zero_input_ref_cells():
+    """The type target is the median over reference cells with in_ref > 0: a type-A cell with no
+    inputs at all (unreconstructed) must not pull the target down."""
+    ref = _toy(["src", "a1", "a2", "a3", "a0"], [("src", "a1", 10), ("src", "a2", 20), ("src", "a3", 30)], dataset="ref")
+    ref_types = ["", "A", "A", "A", "A"]                                # a0 has input 0
+    ds = _toy(["src", "x"], [("src", "x", 5)], dataset="ds")
+    g = graph.normalize_inputs(ds, ref, ["", "A"], ref_types)
+    assert g.W_chem[g.index["x"], g.index["src"]] == pytest.approx(20.0)   # median of (10, 20, 30), not of (0, 10, 20, 30)
+
+
+def test_strip_auto_matches_prefixed_type():
+    ds, _, ref, ref_types = _pair()
+    ds_types = ["", "auto:A", "A", "", "B"]
+    g0 = graph.normalize_inputs(ds, ref, ds_types, ref_types)
+    assert g0.W_chem[g0.index["lo"], g0.index["src"]] == pytest.approx(5.0)     # auto:A is not A by string
+    assert g0.params["normalize"]["auto_matched"] == 0
+    g = graph.normalize_inputs(ds, ref, ds_types, ref_types, strip_auto=True)
+    assert g.W_chem[g.index["lo"], g.index["src"]] == pytest.approx(20.0)      # auto:A -> A -> x4
+    p = g.params["normalize"]
+    assert p["strip_auto"] is True and p["auto_matched"] == 1 and p["cells_scaled"] == 2
+
+
+def test_regions_restrict_scaling():
+    ds, ds_types, ref, ref_types = _pair()
+    cell_regions = ["central_brain", "central_brain", "optic_lobe", "central_brain", ""]
+    g = graph.normalize_inputs(ds, ref, ds_types, ref_types, regions=["central_brain"], cell_regions=cell_regions)
+    assert g.W_chem[g.index["lo"], g.index["src"]] == pytest.approx(20.0)      # in region: scaled
+    assert g.W_chem[g.index["hi"], g.index["src"]] == pytest.approx(-200.0)    # outside: factor 1.0
+    p = g.params["normalize"]
+    assert p["regions"] == ["central_brain"] and p["cells_scaled"] == 1 and p["cells_outside_regions"] == 2
+    with pytest.raises(ValueError):
+        graph.normalize_inputs(ds, ref, ds_types, ref_types, regions=["central_brain"])   # regions need cell_regions
+
+
+def test_cache_name_carries_option_hash():
+    plain = graph._cache_file("ds", "ref")
+    opts = graph._cache_file("ds", "ref", {"strip_auto": True, "regions": ["central_brain"]})
+    assert plain.name.startswith("ds__norm-ref-") and plain.suffix == ".npz"
+    assert opts.name.startswith("ds__norm-ref-") and opts != plain
+    assert graph._cache_file("ds", "ref", {"regions": ["central_brain"], "strip_auto": True}) == opts   # key order is irrelevant
+    assert graph._cache_file("ds", "ref", {}) == plain and graph._cache_file("ds", "ref", {"strip_auto": False, "regions": None}) == plain
 
 
 def test_normalize_cache_roundtrip(tmp_path, monkeypatch):
@@ -56,9 +100,14 @@ def test_normalize_cache_roundtrip(tmp_path, monkeypatch):
     graph.save_cache(ds); graph.save_cache(ref)
     monkeypatch.setattr(graph, "_cell_types", lambda conn, dataset_id, names: ds_types if dataset_id == "ds" else ref_types)
     g = graph.get("ds", normalize="ref")
-    assert (tmp_path / "cache" / "ds__norm-ref.npz").exists()
+    assert graph._cache_file("ds", "ref").exists() and graph._cache_file("ds", "ref").parent == tmp_path / "cache"
     assert g.W_chem[g.index["lo"], g.index["src"]] == pytest.approx(20.0)
     g2 = graph.get("ds", normalize="ref")                               # second time — from cache
     assert g2.version == "v9 norm:ref" and g2.params["normalize"]["cells_scaled"] == 2
     assert (g2.W_chem != g.W_chem).nnz == 0
     assert graph.get("ds").version == "v9"                             # the ordinary cache is untouched
+    monkeypatch.setattr(graph, "_cell_regions", lambda conn, dataset_id, names: ["central_brain", "central_brain", "optic_lobe", "", ""])
+    g3 = graph.get("ds", normalize="ref", norm_opts={"strip_auto": True, "regions": ["central_brain"]})
+    assert g3.params["normalize"]["regions"] == ["central_brain"] and g3.params["normalize"]["cells_scaled"] == 1
+    assert graph._cache_file("ds", "ref", {"strip_auto": True, "regions": ["central_brain"]}).exists()
+    assert graph.get("ds", normalize="ref").params["normalize"]["cells_scaled"] == 2    # the plain normalized cache is separate

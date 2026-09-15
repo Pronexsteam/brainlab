@@ -68,13 +68,14 @@ def test_graph_normalize_key_passed_to_graph_get(tmp_path, monkeypatch):
                 dataset = "toy"; flags = {}; extra = {}; valence = 0; stimulus = {}
                 def save(self): pass
             return R()
-    monkeypatch.setattr(runner.graph_mod, "get", lambda ds, conn=None, normalize=None: calls.setdefault("args", (ds, normalize)) or G())
+    monkeypatch.setattr(runner.graph_mod, "get",
+                        lambda ds, conn=None, normalize=None, norm_opts=None: calls.setdefault("args", (ds, normalize, norm_opts)) or G())
     monkeypatch.setitem(runner.MODELS, "fake", M)
     monkeypatch.setattr(runner.state_mod, "attach", lambda r, ds, names=None: None)
     spec = {"name": "norm_smoke", "dataset": "toy", "model": "fake", "duration_ms": 1,
-            "stimulus": {"pulses": []}, "graph": {"normalize": "r"}}
+            "stimulus": {"pulses": []}, "graph": {"normalize": "r", "strip_auto": True, "regions": ["central_brain"]}}
     p = tmp_path / "norm_smoke.yaml"
     p.write_text(yaml.safe_dump(spec), encoding="utf-8")
     r = runner.run_experiment(p, save=False)
-    assert calls["args"] == ("toy", "r")
-    assert r.extra["graph"] == {"normalize": "r"}
+    assert calls["args"] == ("toy", "r", {"strip_auto": True, "regions": ["central_brain"]})
+    assert r.extra["graph"] == {"normalize": "r", "strip_auto": True, "regions": ["central_brain"]}

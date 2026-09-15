@@ -47,7 +47,9 @@ def _expand_groups(spec):
 def run_experiment(path, save=True):
     spec = load_experiment(path)
     gspec = spec.get("graph", {}) or {}
-    g = graph_mod.get(spec["dataset"], normalize=gspec.get("normalize"))   # graph: {normalize: fafb_783} — input normalization
+    # graph: {normalize: fafb_783, strip_auto: true, regions: [central_brain]} — input normalization and its options
+    norm_opts = {k: v for k, v in gspec.items() if k != "normalize"}
+    g = graph_mod.get(spec["dataset"], normalize=gspec.get("normalize"), norm_opts=norm_opts or None)
     model = MODELS[spec["model"]](g, seed=int(spec["seed"]), **spec["params"])
     st_dict, used_groups, empty_groups = _expand_groups(spec)
     st = stimulus.Stimulus.from_dict(st_dict)
