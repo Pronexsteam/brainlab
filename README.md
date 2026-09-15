@@ -1,5 +1,7 @@
 # BrainLab
 
+[![tests](https://github.com/Pronexsteam/brainlab/actions/workflows/tests.yml/badge.svg)](https://github.com/Pronexsteam/brainlab/actions/workflows/tests.yml)
+
 **Finding (2026-09-15):** a published whole-brain model of the fly (Shiu et al. 2024, LIF with an absolute weight of 0.275 mV per synapse) depends on the *absolute synapse count* of the scan it was tuned on. Run unchanged on three independent adult *Drosophila* connectomes, the same sugar → proboscis-motor-neuron (MN9) experiment gives **76.7 Hz (FAFB v783), 68.9 Hz (MaleCNS v0.9) and 17.8 Hz (BANC v888)**. The path is the same in all three; BANC simply carries ~0.35× the synapses on the same identified cells, and that deficit is present in the native BANC synapse table, not introduced by any compilation step. Global rescaling does not fix it (inhibition rises first); per-type input normalization restores MN9 but inflates brain-wide activity 12×. Anyone comparing connectomes with an absolute-weight model needs to control for this. Details: [docs/2026-09-15-note-banc-en.md](docs/2026-09-15-note-banc-en.md); reported to the data team in [htem/BANC-project#1](https://github.com/htem/BANC-project/issues/1).
 
 **What this is:** a small, single-GPU simulator of real connectomes (adult fly: FlyWire v630 reference, FAFB v783, BANC v888, MaleCNS v0.9; worm: *C. elegans* Cook 2019) with *gates* — nothing counts as a result until it reproduces a published model or an independent experiment. Every run is stored with dataset version, dataset parameters (sign rule, synapse threshold), model parameters, seed and code hash. Runs are never deleted.
@@ -49,6 +51,8 @@ Expected `results/atlas/fly_taste.md`: MN9 sugar / sugar+bitter = fafb_783 76.7 
 python -m brainlab.store.fetch --extra fafb_783 banc_888
 python lab/analysis/banc_native_synapses.py            # ~6 min → docs/2026-09-15-banc-native-synapse-check.md
 ```
+
+CI (GitHub Actions) runs the fast tests on CPU with the worm dataset only; the fly datasets and both gates need a GPU and the downloads above.
 
 Other commands: `python -m brainlab.view.server` (local viewer, http://127.0.0.1:8765, subgraph by cell group + state panel), `python -m pytest -q tests` (fast; `-m slow` for real-data loader tests).
 
