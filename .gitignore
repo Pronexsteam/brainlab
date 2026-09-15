@@ -10,3 +10,4 @@ results/oracle_brian2/
 __pycache__/
 *.pyc
 .pytest_cache/
+docs/internal/

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """BrainLab self-test: technical (pytest), scientific (gate 1, habituation, gate 2),
-honesty (run descriptions and the journal). The VERDICT is honest: it is computed over all
-blocks at once, including gate 1 (closed by the 2026-09-14 decision, the worm is not being fixed)
+honesty (run descriptions). The VERDICT is honest: it is computed over all
+blocks at once, including gate 1 (a known red that is deliberately not tuned)
 — so the VERDICT can be red even when the fly science (gate 2) is green. Both gates are printed
 on their own line, so this is visible without reading the code."""
 import json
@@ -16,7 +16,7 @@ from brainlab import paths  # noqa: E402
 
 # Before this point, dataset_version could legitimately be absent from run.json: the field was
 # introduced in the final wave of edits to plan 1-3 around 22:30 on 2026-09-14 (plan task 7, steps 4-6);
-# the 22:31 cutoff is the controller's decision (a refinement of the earlier "22:00" estimate, based on the actual code).
+# the 22:31 cutoff is when dataset_version entered the code; earlier runs legitimately lack it.
 # Runs whose folder name is newer than the cutoff must have dataset_version.
 DATASET_VERSION_CUTOFF = "20260914-223100"
 
@@ -127,17 +127,14 @@ def main():
         gate2_ok = bool(g2["passed"])
     ok &= gate2_ok
 
-    print("gate 1 (worm, closed by the 2026-09-14 decision): %s" % ("green" if gate1_ok else "red"))
+    print("gate 1 (worm, known red, not tuned): %s" % ("green" if gate1_ok else "red"))
     print("gate 2 (fly): %s" % ("green" if gate2_ok else "red"))
 
     print("== honesty ==")
     ok_h, report = honesty(paths.RESULTS)
     for label, items in report.items():
         print("%s:" % label, items or "none")
-    journal = paths.DOCS / "ЖУРНАЛ.md"
-    has_journal = journal.exists() and journal.stat().st_size > 200
-    print("journal:", "present" if has_journal else "missing")
-    ok_h = ok_h and has_journal
+    # the lab journal is kept outside the public tree (docs/internal); it is not a public check
     ok &= ok_h
 
     print("\nVERDICT:", "green" if ok else "RED")

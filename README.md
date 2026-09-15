@@ -4,7 +4,7 @@
 
 **What this is:** a small, single-GPU simulator of real connectomes (adult fly: FlyWire v630 reference, FAFB v783, BANC v888, MaleCNS v0.9; worm: *C. elegans* Cook 2019) with *gates* — nothing counts as a result until it reproduces a published model or an independent experiment. Every run is stored with dataset version, dataset parameters (sign rule, synapse threshold), model parameters, seed and code hash. Runs are never deleted.
 
-**What this is not:** a discovery about how the fly thinks. Everything here is a model prediction; it becomes a fact only when someone with living flies tests it. Gate 1 (worm touch response) is red and left red on purpose — the worm connectome lacks the physiology to pass it, and we did not tune it.
+**What this is not:** a discovery about how the fly thinks. Everything here is a model prediction; it becomes a fact only when someone with living flies tests it. Gate 1 (worm touch response) is red and left red: the worm connectome lacks the physiology to pass it, and we did not tune it.
 
 Built in two nights with Claude Code. Code: MIT. Data: see [Data and citations](#data-and-citations) — not included in the repo, downloaded by the fetch script.
 
@@ -27,7 +27,7 @@ Expected gate-2 line on our machine (RTX 5050, seed 0; Poisson input is sampled,
 ```
 gate 2: {"mn9_ours_hz": 111.0, "mn9_oracle_hz": 93.27, "ratio": 1.19, "spearman_top200": 0.926,
            "active_ours": 372, "active_oracle": 389, "suppression": 0.018, "mn9_local_brian2_hz": 82.67, "passed": true}
-gate 1 (worm, closed by the 2026-09-14 decision): red
+gate 1 (worm, known red, not tuned): red
 gate 2 (fly): green
 VERDICT: RED            # red because gate 1 is red — by design
 ```
@@ -61,7 +61,7 @@ Other commands: `python -m brainlab.view.server` (local viewer, http://127.0.0.1
 
 ## Layout
 
-`brainlab/store` (SQLite + sparse cache, fetch, loaders) · `brainlab/sim` (graded model, LIF, stimulus, run result) · `brainlab/lab` (cell populations by rules, state vector, YAML experiment runner, gates, atlas, analyses) · `brainlab/view` (stdlib server + canvas page) · `lab/` (experiments, populations, analyses) · `docs/` (design, survey, plans, journal — Russian) · `results/atlas`, `results/screens`.
+`brainlab/store` (SQLite + sparse cache, fetch, loaders) · `brainlab/sim` (graded model, LIF, stimulus, run result) · `brainlab/lab` (cell populations by rules, state vector, YAML experiment runner, gates, atlas, analyses) · `brainlab/view` (stdlib server + canvas page) · `lab/` (experiments, populations, analyses) · `docs/` (the BANC note and the two analyses behind it) · `results/atlas`, `results/screens`.
 
 ## Data and citations
 

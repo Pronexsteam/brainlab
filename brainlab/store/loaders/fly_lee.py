@@ -6,7 +6,7 @@ Assumptions:
   GABA −1, glutamate −1 (GluCl in the fly), histamine −1 (in the fly, photoreceptors → lamina
   via histamine-chloride HisCl channels, inhibitory), monoamines (dopamine, serotonin, octopamine)
   and tyramine — MONOAMINE_SIGN (see below, cross-checked against the Shiu reference only for
-  dopamine/serotonin/octopamine; tyramine was assigned to the same class by the author's decision
+  dopamine/serotonin/octopamine; tyramine is assigned to the same class by assumption
   and was not separately checked against the reference), "unclear"/empty/anything else not on the
   list — 0 (the edge stays in the database with a zero sign, does not enter W_chem);
 - storage threshold min_count = 5 synapses per pair (like "connections" in Codex); the Shiu
