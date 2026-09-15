@@ -55,7 +55,7 @@ Other commands: `python -m brainlab.view.server` (local viewer, http://127.0.0.1
 ## Assumptions stated out loud
 
 - Synapse sign from the predicted presynaptic transmitter: ACh +1, GABA −1, glutamate −1, histamine −1, dopamine/serotonin/octopamine/tyramine +1 (verified 99.97 % against the reference's own signs), unknown 0. Recorded per dataset as `sign_rule`; a parameter, not a truth.
-- Lee-lab compiled edgelists are stored with ≥ 5 synapses per pair (Codex convention); the Shiu reference keeps every synapse. The model was validated on the latter and the atlas runs on the former — a control run of FAFB at threshold 1 is the next item.
+- Lee-lab compiled edgelists are stored with ≥ 5 synapses per pair (Codex convention); the Shiu reference keeps every synapse. The model was validated on the latter and the atlas runs on the former; the control run of FAFB at threshold 1 (15.0 M edges) gives MN9 70.0 Hz on sugar, 0.0 Hz on sugar + bitter, 344 active cells, against 76.7 / 0.0 / 330 at threshold 5 — the threshold does not explain the BANC deficit.
 - Taste groups are labellar GRNs only (as in the reference); BANC and MaleCNS also contain leg and wing GRNs, kept as `*_all` groups.
 - The LIF differs from Brian2 by one integration step in synaptic delay (18 vs 19 steps at 0.1 ms) and uses explicit Euler for v (≈ +1 % rates); documented in `brainlab/sim/lif.py`.
 

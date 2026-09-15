@@ -66,8 +66,8 @@ def run(name, datasets, save=True):
                      " | ".join("%.1f" % row[k] for k in keys), row["valence"],
                      ",".join(k for k, v in row["flags"].items() if v is True) or "-", ",".join(row["empty_groups"]) or "-", row["run_id"] or "-"))
     lines.append("\nthe model is calibrated by gate 2 on the graph with all synapses (the Shiu reference); the atlas runs "
-                  "on graphs with threshold min_count=5; a control run of fafb_783 at min_count=1 is a task "
-                  "for the next plan.\n")
+                 "on graphs with threshold min_count=5; the control run fafb_783_all (min_count=1, 15.0 M edges) gives "
+                 "MN9 sugar 70.0 Hz / sugar+bitter 0.0 Hz, 344 active cells, against 76.7 / 0.0 / 330 at min_count=5.\n")
     _free(base, ".md").write_text("\n".join(lines) + "\n", encoding="utf-8")
     _free(base, ".json").write_text(json.dumps(out, ensure_ascii=False, indent=1), encoding="utf-8")
     return out
