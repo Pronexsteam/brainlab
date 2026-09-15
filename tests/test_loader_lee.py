@@ -40,6 +40,28 @@ def test_load_toy(tmp_db, tmp_path):
     conn.close()
 
 
+def test_store_as_registers_under_new_id_with_all_edges(tmp_db, tmp_path):
+    """load(..., store_as="x") registers the same files under dataset id x; with min_count=1 every
+    edge whose pre/post is known enters the database, and params.min_count records the threshold."""
+    conn = db.connect(tmp_db)
+    raw = _toy(tmp_path)
+    fly_lee.load(conn, raw, "fafb_783", min_count=5)
+    s = fly_lee.load(conn, raw, "fafb_783", min_count=1, store_as="x")
+    assert s["neurons"] == 4 and s["edges"] == 3 and s["skipped_edges_unknown_id"] == 1
+    info = db.dataset_info(conn, "x")
+    assert info is not None and info["params"]
+    import json
+    params = json.loads(info["params"])
+    assert params["min_count"] == 1
+    assert fly_lee.rule_hash(1) in info["version"] and fly_lee.rule_hash(5) not in info["version"]
+    assert json.loads(info["files"]) == json.loads(db.dataset_info(conn, "fafb_783")["files"])
+    g = graph.build(conn, "x")
+    assert g.W_chem[g.index["3"], g.index["1"]] == 3          # count 3 passes min_count 1
+    g5 = graph.build(conn, "fafb_783")                        # the original dataset is untouched
+    assert g5.W_chem.nnz == 2 and g5.params["min_count"] == 5
+    conn.close()
+
+
 def test_missing_column_is_loud(tmp_db, tmp_path):
     raw = _toy(tmp_path)
     ft.write_feather(pa.table({"a": ["1"], "b": ["2"], "count": pa.array([9], pa.int32())}), raw / "fafb_783_simple_edgelist.feather")

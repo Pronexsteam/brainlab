@@ -110,8 +110,12 @@ def _edge_batches(edge_f):
         mm.close()
 
 
-def load(conn, raw_dir, dataset_id, min_count=5):
+def load(conn, raw_dir, dataset_id, min_count=5, store_as=None):
+    """Load one Lee-lab scan into the database. dataset_id selects the files (SPECS); store_as, if
+    given, is the id the dataset is registered under (e.g. fafb_783_all for the same files at
+    min_count=1), with params.min_count recording the threshold actually applied."""
     spec = SPECS[dataset_id]
+    dataset_id = store_as or dataset_id
     raw_dir = Path(raw_dir)
     meta_f, edge_f = raw_dir / spec["meta"], raw_dir / spec["edges"]
     meta = ft.read_table(meta_f).to_pandas()
@@ -167,9 +171,17 @@ def load(conn, raw_dir, dataset_id, min_count=5):
 
 
 if __name__ == "__main__":
-    import sys
+    import argparse
     from .. import fetch
+    ap = argparse.ArgumentParser(description="Load Lee-lab fly scans into the database.")
+    ap.add_argument("datasets", nargs="*", help="dataset ids (default: all of %s)" % ", ".join(SPECS))
+    ap.add_argument("--min-count", type=int, default=5, help="synapse threshold per pair (default 5)")
+    ap.add_argument("--as", dest="store_as", default=None,
+                    help="register under this id instead of the dataset id (one dataset only)")
+    a = ap.parse_args()
+    if a.store_as and len(a.datasets) != 1:
+        ap.error("--as needs exactly one dataset")
     c = db.connect()
-    for ds in sys.argv[1:] or list(SPECS):
-        print(ds, load(c, fetch.raw_dir(ds), ds))
+    for ds in a.datasets or list(SPECS):
+        print(a.store_as or ds, load(c, fetch.raw_dir(ds), ds, min_count=a.min_count, store_as=a.store_as))
     c.close()
