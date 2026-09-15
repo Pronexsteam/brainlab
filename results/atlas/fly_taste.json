@@ -1,0 +1,41 @@
+{
+ "fafb_783": {
+  "run_id": "20260915-013801-00",
+  "valence": 1,
+  "flags": {
+   "silent": false,
+   "seizure": false,
+   "mean_rate": 0.00016078579938039184
+  },
+  "empty_groups": [],
+  "baseline": 0.0,
+  "sugar": 76.66666399348865,
+  "sugar_bitter": 0.0
+ },
+ "banc_888": {
+  "run_id": "20260915-013810-00",
+  "valence": 1,
+  "flags": {
+   "silent": false,
+   "seizure": false,
+   "mean_rate": 0.0001179896789835766
+  },
+  "empty_groups": [],
+  "baseline": 0.0,
+  "sugar": 17.777777869593013,
+  "sugar_bitter": 4.444444467398253
+ },
+ "malecns_09": {
+  "run_id": "20260915-013831-00",
+  "valence": 1,
+  "flags": {
+   "silent": false,
+   "seizure": false,
+   "mean_rate": 0.00344149861484766
+  },
+  "empty_groups": [],
+  "baseline": 0.0,
+  "sugar": 68.88888098976828,
+  "sugar_bitter": 0.0
+ }
+}

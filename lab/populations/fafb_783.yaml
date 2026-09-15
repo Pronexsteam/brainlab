@@ -1,0 +1,28 @@
+dataset: fafb_783
+groups:
+  # sugar/bitter/water_grn — только губные (labellum) ГРН, как у Shiu 2024; версии без
+  # ограничения по органу — *_all (у BANC/MaleCNS та же метка охватывает ещё ноги и крылья,
+  # т.к. эти сканы включают вентральный нервный канатик, а FAFB — только мозг).
+  sugar_grn:       {where: {cell_function_detailed: {startswith: sugar}, cell_sub_class: {contains: labellum}}}
+  sugar_grn_right: {where: {cell_function_detailed: {startswith: sugar}, cell_sub_class: {contains: labellum}, side: right}}
+  bitter_grn:      {where: {cell_function_detailed: {startswith: bitter}, cell_sub_class: {contains: labellum}}}
+  water_grn:       {where: {cell_function_detailed: {startswith: water}, cell_sub_class: {contains: labellum}}}
+  sugar_grn_all:   {where: {cell_function_detailed: {startswith: sugar}}}
+  bitter_grn_all:  {where: {cell_function_detailed: {startswith: bitter}}}
+  water_grn_all:   {where: {cell_function_detailed: {startswith: water}}}
+  mn9:             {where: {cell_type: MN9}}
+  mn9_right:       {where: {cell_type: MN9, side: right}}
+  dan_reward:      {where: {cell_type: {startswith: PAM}}}
+  dan_punish:      {where: {cell_type: {startswith: PPL1}}}
+  motor:           {where: {cell_class: motor}}
+  descending:      {where: {cell_class: descending}}
+  gustatory:       {where: {cell_function: gustatory}}
+state:
+  - sugar_grn
+  - bitter_grn
+  - water_grn
+  - mn9
+  - dan_reward
+  - dan_punish
+  - motor
+  - descending

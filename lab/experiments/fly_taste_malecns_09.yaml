@@ -1,0 +1,30 @@
+name: fly_taste_malecns_09
+dataset: malecns_09
+model: lif
+params: {dt_ms: 0.1}
+seed: 0
+duration_ms: 1500
+window_ms: 50
+stimulus:
+  noise: 0.0
+  pulses:
+    - {names: "group:sugar_grn_right", value: 150.0, t0_ms: 250, t1_ms: 750, kind: poisson}
+    - {names: "group:bitter_grn", value: 150.0, t0_ms: 1000, t1_ms: 1500, kind: poisson}
+    - {names: "group:sugar_grn_right", value: 150.0, t0_ms: 1000, t1_ms: 1500, kind: poisson}
+measure:                      # что атлас достаёт из прогона (группа, окно) → Гц
+  baseline:      {group: mn9, window: [0, 250]}
+  sugar:         {group: mn9, window: [300, 750]}
+  sugar_bitter:  {group: mn9, window: [1050, 1500]}
+valence:
+  metric: ratio
+  group: mn9
+  first: [300, 750]
+  last: [1050, 1500]
+  reward_if_below: 0.5      # горечь подавила → награда (известный ответ воспроизведён)
+  pain_if_above: 1.0
+state_groups: [sugar_grn, bitter_grn, water_grn, mn9, dan_reward, dan_punish, motor, descending]
+extreme: false
+notes: >
+  Врождённый ответ (Shiu 2024): сахар → MN9, горечь глушит. Группы — по подписям набора
+  (cell_function_detailed / cell_type), не по спискам id, поэтому один файл на скан.
+  Пустая группа (нет подписей в наборе) → прогон помечается в extra["empty_groups"], измерение = 0.

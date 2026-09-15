@@ -1,0 +1,12 @@
+dataset: worm_cook2019
+source: brainlab/lab/groups.py (groups.WORM), явные списки, классический контур касания (Chalfie 1985)
+groups:
+  anterior_touch: {names: [ALML, ALMR, AVM]}
+  posterior_touch: {names: [PLML, PLMR]}
+  backward_cmd: {names: [AVAL, AVAR, AVDL, AVDR, AVEL, AVER]}
+  forward_cmd: {names: [AVBL, AVBR, PVCL, PVCR]}
+state:
+  - anterior_touch
+  - posterior_touch
+  - backward_cmd
+  - forward_cmd

@@ -1,0 +1,28 @@
+dataset: banc_888
+groups:
+  # sugar/bitter/water_grn — только губные (labellum) ГРН, как у Shiu 2024; версии без
+  # ограничения по органу — *_all (этот скан включает вентральный нервный канатик, поэтому
+  # без ограничения по cell_sub_class метка sugar/bitter/water ловит ещё ноги и крылья).
+  sugar_grn:       {where: {cell_function_detailed: {startswith: sugar}, cell_sub_class: {contains: labellum}}}
+  sugar_grn_right: {where: {cell_function_detailed: {startswith: sugar}, cell_sub_class: {contains: labellum}, side: right}}
+  bitter_grn:      {where: {cell_function_detailed: {startswith: bitter}, cell_sub_class: {contains: labellum}}}
+  water_grn:       {where: {cell_function_detailed: {startswith: water}, cell_sub_class: {contains: labellum}}}
+  sugar_grn_all:   {where: {cell_function_detailed: {startswith: sugar}}}
+  bitter_grn_all:  {where: {cell_function_detailed: {startswith: bitter}}}
+  water_grn_all:   {where: {cell_function_detailed: {startswith: water}}}
+  mn9:             {where: {any: [{cell_type: MN9}, {fafb_cell_type: MN9}]}}
+  mn9_right:       {where: {any: [{cell_type: MN9}, {fafb_cell_type: MN9}], side: right}}
+  dan_reward:      {where: {any: [{cell_type: {startswith: PAM}}, {fafb_cell_type: {startswith: PAM}}]}}
+  dan_punish:      {where: {any: [{cell_type: {startswith: PPL1}}, {fafb_cell_type: {startswith: PPL1}}]}}
+  motor:           {where: {cell_class: motor}}
+  descending:      {where: {cell_class: descending}}
+  gustatory:       {where: {cell_function: gustatory}}
+state:
+  - sugar_grn
+  - bitter_grn
+  - water_grn
+  - mn9
+  - dan_reward
+  - dan_punish
+  - motor
+  - descending

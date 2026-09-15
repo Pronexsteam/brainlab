@@ -1,0 +1,39 @@
+name: worm_tap_habituation
+dataset: worm_cook2019
+model: graded
+params: {std: {u: 0.08, tau_rec_ms: 480}}
+seed: 0
+duration_ms: 12000
+window_ms: 50
+stimulus:
+  noise: 0.0
+  pulses:
+    - {names: [PLML, PLMR], value: 1.0, t0_ms: 500, t1_ms: 700}
+    - {names: [PLML, PLMR], value: 1.0, t0_ms: 1500, t1_ms: 1700}
+    - {names: [PLML, PLMR], value: 1.0, t0_ms: 2500, t1_ms: 2700}
+    - {names: [PLML, PLMR], value: 1.0, t0_ms: 3500, t1_ms: 3700}
+    - {names: [PLML, PLMR], value: 1.0, t0_ms: 4500, t1_ms: 4700}
+    - {names: [PLML, PLMR], value: 1.0, t0_ms: 5500, t1_ms: 5700}
+    - {names: [PLML, PLMR], value: 1.0, t0_ms: 6500, t1_ms: 6700}
+    - {names: [PLML, PLMR], value: 1.0, t0_ms: 7500, t1_ms: 7700}
+    - {names: [PLML, PLMR], value: 1.0, t0_ms: 8500, t1_ms: 8700}
+    - {names: [PLML, PLMR], value: 1.0, t0_ms: 9500, t1_ms: 9700}
+    - {names: [ALML, ALMR], value: 1.0, t0_ms: 10500, t1_ms: 10700}
+valence:
+  metric: ratio
+  group: backward_cmd
+  first: [550, 700]
+  last: [9550, 9700]
+  novel: [10550, 10700]
+  novel_group: backward_cmd
+  reward_if_below: 0.8
+  pain_if_above: 1.0
+extreme: false
+notes: >
+  Привыкание к постукиванию (Rankin 1990): повторный задний стимул даёт всё меньший ответ,
+  новый стимул ответ возвращает. Депрессия синапсов — предположение, взятое у flybrain.
+  Замер на backward_cmd — ложная посылка: в этом наборе (Cook 2019) у PLM нет ни одного
+  химического выхода вообще, только щелевые контакты на PVC (и PLN/PDE/PHC/LUA/hyp), а
+  щелевые контакты в модели не депрессируют. Поэтому замер на backward_cmd, как и ожидается,
+  НЕ покажет привыкания, пока не изменено это допущение модели (например, депрессия щелевых
+  контактов) или сами данные. Оставлено как записанное допущение, а не исправлено задним числом.

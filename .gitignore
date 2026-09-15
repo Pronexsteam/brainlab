@@ -1,0 +1,12 @@
+# данные (30 ГБ сырья, база, кэши) — скачиваются brainlab/store/fetch.py
+data/
+# прогоны (по ~50 МБ каждый) воспроизводятся; таблицы атласа и снимки оставляем
+results/*/
+!results/atlas/
+!results/screens/
+results/oracle_brian2/
+# рабочие черновики субагентов
+.superpowers/
+__pycache__/
+*.pyc
+.pytest_cache/
