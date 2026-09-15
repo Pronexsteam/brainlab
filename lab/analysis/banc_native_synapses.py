@@ -8,7 +8,7 @@ Run from the project root:
 Reads: data/banc_888/raw/banc_888_synapses_v3_enriched.parquet (199 million rows, by row group, 4 columns),
 data/fafb_783/raw/fafb_783_synapses.parquet (55.6 million), both Lee-lab edgelists, meta files and
 data/store.sqlite (cell labels). Changes nothing under brainlab/ or data/; intermediate histograms go
-into --cache (a temp folder by default). Report: docs/2026-09-15-проверка-синапсов-banc.md.
+into --cache (a temp folder by default). Report: docs/2026-09-15-banc-native-synapse-check.md.
 """
 import argparse
 import sys

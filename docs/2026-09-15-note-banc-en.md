@@ -55,7 +55,7 @@ BANC data: 0.75 (≈0.5 detection threshold, ≈0.25 proofreading of presynaptic
 
 ## How we computed this
 
-Sign rule hash f1355d3e. Code: `lab/analysis/banc_sugar_mn9.py` (paths, controls), `lab/analysis/banc_native_synapses.py` (native-table check; report `docs/2026-09-15-проверка-синапсов-banc.md`), LIF `brainlab/sim/lif.py`. Runs 20260915-013801-00 (FAFB), -013810-00 (BANC), -013831-00 (MaleCNS); controls -032116-00 … -032207-00; normalized BANC -034159-00.
+Sign rule hash f1355d3e. Code: `lab/analysis/banc_sugar_mn9.py` (paths, controls), `lab/analysis/banc_native_synapses.py` (native-table check; report `docs/2026-09-15-banc-native-synapse-check.md`), LIF `brainlab/sim/lif.py`. Runs 20260915-013801-00 (FAFB), -013810-00 (BANC), -013831-00 (MaleCNS); controls -032116-00 … -032207-00; normalized BANC -034159-00.
 
 ## What would falsify this
 

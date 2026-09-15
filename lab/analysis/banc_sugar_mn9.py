@@ -7,7 +7,7 @@ Run from the project root:
 Changes nothing under brainlab/; reads the graph (brainlab.store.graph), the label database, atlas
 runs, and Lee-lab's raw edgelist files (data/<dataset>/raw) to look at synapses BEFORE the
 min_count=5 threshold.
-Report: docs/2026-09-15-анализ-banc-сахар-mn9.md.
+Report: docs/2026-09-15-banc-sugar-mn9-analysis.md.
 """
 import argparse
 import random

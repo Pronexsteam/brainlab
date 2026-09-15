@@ -47,7 +47,7 @@ Expected `results/atlas/fly_taste.md`: MN9 sugar / sugar+bitter = fafb_783 76.7 
 ```bash
 # 4. the synapse-level check behind the BANC finding (native synapse tables: 2 GB + 20 GB)
 python -m brainlab.store.fetch --extra fafb_783 banc_888
-python lab/analysis/banc_native_synapses.py            # ~6 min → docs/2026-09-15-проверка-синапсов-banc.md
+python lab/analysis/banc_native_synapses.py            # ~6 min → docs/2026-09-15-banc-native-synapse-check.md
 ```
 
 Other commands: `python -m brainlab.view.server` (local viewer, http://127.0.0.1:8765, subgraph by cell group + state panel), `python -m pytest -q tests` (fast; `-m slow` for real-data loader tests).
